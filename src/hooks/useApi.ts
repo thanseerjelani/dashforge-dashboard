@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { WeatherData } from '@/types/weather'
 import { NewsArticle, NewsCategory } from '@/types/news'

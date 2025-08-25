@@ -7,10 +7,7 @@ export interface NewsArticle {
   url: string
   urlToImage: string
   publishedAt: string
-  source: {
-    id: string
-    name: string
-  }
+  source: NewsSource
   author: string
   category: NewsCategory
 }
@@ -27,19 +24,6 @@ export type NewsCategory =
 export interface NewsSource {
   id: string | null
   name: string
-}
-
-export interface NewsArticle {
-  id: string
-  title: string
-  description: string
-  content: string
-  url: string
-  urlToImage: string
-  publishedAt: string
-  source: NewsSource
-  author: string
-  category: NewsCategory
 }
 
 // Raw NewsAPI Response Types
@@ -72,4 +56,3 @@ export interface NewsApiErrorResponse {
   code: string
   message: string
 }
-
