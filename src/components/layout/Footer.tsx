@@ -8,7 +8,7 @@ export const Footer = () => {
                         <div className="rounded bg-primary/10 p-1">
                             <div className="h-4 w-4 rounded bg-gradient-to-br from-primary to-sky-700" />
                         </div>
-                        <span className="text-sm font-medium">Personal Dashboard</span>
+                        <span className="text-sm font-medium">DashForge</span>
                     </div>
 
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
