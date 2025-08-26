@@ -1,6 +1,25 @@
-// src/services/weatherApi.ts - Fixed version with CORS handling
+// src/services/weatherApi.ts - Production safe version
 import { WeatherApiResponse, WeatherData, WeatherForecast, ForecastApiResponse } from '@/types/weather'
 import { API_ENDPOINTS } from '@/utils/constants'
+
+// Helper functions for safe logging
+const debugLog = (...args: any[]) => {
+  if (import.meta.env.MODE === 'development') {
+    console.log(...args)
+  }
+}
+
+const debugWarn = (...args: any[]) => {
+  if (import.meta.env.MODE === 'development') {
+    console.warn(...args)
+  }
+}
+
+const debugError = (...args: any[]) => {
+  if (import.meta.env.MODE === 'development') {
+    console.error(...args)
+  }
+}
 
 class WeatherService {
   private apiKey: string
@@ -10,7 +29,7 @@ class WeatherService {
     this.apiKey = API_ENDPOINTS.weather.key
     this.baseUrl = API_ENDPOINTS.weather.base
     
-    console.log('WeatherService initialized with API key:', this.apiKey ? `PRESENT (${this.apiKey.substring(0, 8)}...)` : 'MISSING')
+    debugLog('WeatherService initialized with API key:', this.apiKey ? `PRESENT (${this.apiKey.substring(0, 8)}...)` : 'MISSING')
   }
 
   async getCurrentWeather(city: string): Promise<WeatherData> {
@@ -93,7 +112,7 @@ class WeatherService {
       
       return this.transformForecastData(response)
     } catch (error) {
-      console.warn('Forecast data not available:', error)
+      debugWarn('Forecast data not available:', error)
       return this.getMockForecastData()
     }
   }
@@ -112,7 +131,7 @@ class WeatherService {
       
       return this.transformForecastData(response)
     } catch (error) {
-      console.warn('Forecast data not available:', error)
+      debugWarn('Forecast data not available:', error)
       return this.getMockForecastData()
     }
   }
@@ -122,7 +141,7 @@ class WeatherService {
       {
         name: 'Direct Fetch (CORS might fail)',
         fetch: async () => {
-          console.log(`Trying direct fetch to OpenWeatherMap ${type}...`)
+          debugLog(`Trying direct fetch to OpenWeatherMap ${type}...`)
           
           const response = await fetch(weatherUrl, {
             headers: {
@@ -132,7 +151,7 @@ class WeatherService {
           
           if (!response.ok) {
             const errorText = await response.text()
-            console.error('Direct fetch error response:', errorText)
+            debugError('Direct fetch error response:', errorText)
             throw new Error(`HTTP ${response.status}: ${errorText}`)
           }
           
@@ -143,7 +162,7 @@ class WeatherService {
         name: 'AllOrigins Proxy',
         fetch: async () => {
           const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(weatherUrl)}`
-          console.log(`Trying AllOrigins proxy for ${type}...`)
+          debugLog(`Trying AllOrigins proxy for ${type}...`)
           
           const response = await fetch(proxyUrl)
           if (!response.ok) {
@@ -164,7 +183,7 @@ class WeatherService {
         name: 'CORS Proxy',
         fetch: async () => {
           const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(weatherUrl)}`
-          console.log(`Trying CORS proxy for ${type}...`)
+          debugLog(`Trying CORS proxy for ${type}...`)
           
           const response = await fetch(proxyUrl)
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
@@ -176,31 +195,31 @@ class WeatherService {
 
     for (const method of methods) {
       try {
-        console.log(`🔄 Trying ${method.name} for ${type}...`)
+        debugLog(`🔄 Trying ${method.name} for ${type}...`)
         
         const weatherData = await method.fetch()
         
-        console.log(`${type} response received:`, {
+        debugLog(`${type} response received:`, {
           hasData: !!weatherData,
           hasMain: type === 'weather' ? !!weatherData.main : !!weatherData.list,
           cityName: type === 'weather' ? weatherData.name : weatherData.city?.name
         })
         
         if (type === 'weather' && !weatherData.main) {
-          console.warn(`${method.name} returned invalid weather data`)
+          debugWarn(`${method.name} returned invalid weather data`)
           continue
         }
         
         if (type === 'forecast' && (!weatherData.list || weatherData.list.length === 0)) {
-          console.warn(`${method.name} returned invalid forecast data`)
+          debugWarn(`${method.name} returned invalid forecast data`)
           continue
         }
         
-        console.log(`✅ ${method.name} successful for ${type}!`)
+        debugLog(`✅ ${method.name} successful for ${type}!`)
         return weatherData
 
       } catch (error) {
-        console.warn(`❌ ${method.name} failed for ${type}:`, error instanceof Error ? error.message : error)
+        debugWarn(`❌ ${method.name} failed for ${type}:`, error instanceof Error ? error.message : error)
         continue
       }
     }
@@ -277,7 +296,7 @@ class WeatherService {
   }
 
   private getMockWeatherData(city: string): WeatherApiResponse {
-    console.log('🎭 Generating mock weather data for:', city)
+    debugLog('🎭 Generating mock weather data for:', city)
     
     return {
       coord: { lat: 19.0760, lon: 72.8777 },
@@ -308,7 +327,7 @@ class WeatherService {
   }
 
   private getMockWeatherDataByCoords(lat: number, lon: number): WeatherApiResponse {
-    console.log('🎭 Generating mock weather data for coordinates:', lat, lon)
+    debugLog('🎭 Generating mock weather data for coordinates:', lat, lon)
     
     return {
       coord: { lat, lon },
@@ -365,10 +384,10 @@ class WeatherService {
       const response = await fetch(testUrl)
       const data = await response.json()
       
-      console.log('Weather API Key test result:', data)
+      debugLog('Weather API Key test result:', data)
       return !!data.main
     } catch (error) {
-      console.error('Weather API Key test failed:', error)
+      debugError('Weather API Key test failed:', error)
       return false
     }
   }

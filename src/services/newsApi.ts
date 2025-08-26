@@ -1,20 +1,41 @@
-// src/services/newsApi.ts - Fixed version with proper debugging
+// src/services/newsApi.ts - Production safe version
 import { NewsApiResponse, NewsApiErrorResponse, NewsArticle, NewsCategory, RawNewsArticle } from '@/types/news'
 import { API_ENDPOINTS } from '@/utils/constants'
 import { generateId } from '@/utils/helpers'
+
+// Helper function for safe logging
+const debugLog = (...args: any[]) => {
+  if (import.meta.env.MODE === 'development') {
+    console.log(...args)
+  }
+}
+
+const debugWarn = (...args: any[]) => {
+  if (import.meta.env.MODE === 'development') {
+    console.warn(...args)
+  }
+}
+
+const debugError = (...args: any[]) => {
+  if (import.meta.env.MODE === 'development') {
+    console.error(...args)
+  }
+}
 
 class NewsService {
   private apiKey: string
 
   constructor() {
-    // Debug environment variables
-    console.log('All import.meta.env variables:', import.meta.env)
-    console.log('VITE_NEWS_API_KEY value:', import.meta.env.VITE_NEWS_API_KEY)
-    console.log('API_ENDPOINTS.news:', API_ENDPOINTS.news)
+    // Debug environment variables ONLY in development
+    if (import.meta.env.MODE === 'development') {
+      console.log('All import.meta.env variables:', import.meta.env)
+      console.log('VITE_NEWS_API_KEY value:', import.meta.env.VITE_NEWS_API_KEY)
+      console.log('API_ENDPOINTS.news:', API_ENDPOINTS.news)
+    }
     
     this.apiKey = import.meta.env.VITE_NEWS_API_KEY || API_ENDPOINTS.news.key || ''
     
-    console.log('NewsService initialized with API key:', this.apiKey ? `PRESENT (${this.apiKey.substring(0, 8)}...)` : 'MISSING')
+    debugLog('NewsService initialized with API key:', this.apiKey ? `PRESENT (${this.apiKey.substring(0, 8)}...)` : 'MISSING')
   }
 
   async getTopHeadlines(
@@ -22,12 +43,14 @@ class NewsService {
     country: string = 'us',
     pageSize: number = 20
   ): Promise<NewsArticle[]> {
-    // Enhanced validation with detailed error info
+    // Enhanced validation with detailed error info ONLY in development
     if (!this.apiKey || this.apiKey.trim() === '') {
-      console.error('NewsAPI Debug Info:')
-      console.error('- import.meta.env.VITE_NEWS_API_KEY:', import.meta.env.VITE_NEWS_API_KEY)
-      console.error('- API_ENDPOINTS.news.key:', API_ENDPOINTS.news.key)
-      console.error('- this.apiKey:', this.apiKey)
+      if (import.meta.env.MODE === 'development') {
+        console.error('NewsAPI Debug Info:')
+        console.error('- import.meta.env.VITE_NEWS_API_KEY:', import.meta.env.VITE_NEWS_API_KEY)
+        console.error('- API_ENDPOINTS.news.key:', API_ENDPOINTS.news.key)
+        console.error('- this.apiKey:', this.apiKey)
+      }
       throw new Error('NewsAPI key is missing. Please check your .env file and ensure VITE_NEWS_API_KEY is set.')
     }
 
@@ -45,7 +68,7 @@ class NewsService {
     const baseUrl = import.meta.env.VITE_NEWS_API_URL || API_ENDPOINTS.news.base
     const newsApiUrl = `${baseUrl}/top-headlines?${params.toString()}`
     
-    console.log('Final NewsAPI URL (without key):', newsApiUrl.replace(this.apiKey, 'HIDDEN_KEY'))
+    debugLog('Final NewsAPI URL (without key):', newsApiUrl.replace(this.apiKey, 'HIDDEN_KEY'))
 
     // Try direct fetch first, then proxies
     return await this.tryMultipleMethods(newsApiUrl, category || 'general')
@@ -70,7 +93,7 @@ class NewsService {
     const baseUrl = import.meta.env.VITE_NEWS_API_URL || API_ENDPOINTS.news.base
     const newsApiUrl = `${baseUrl}/everything?${params.toString()}`
     
-    console.log('Search URL (without key):', newsApiUrl.replace(this.apiKey, 'HIDDEN_KEY'))
+    debugLog('Search URL (without key):', newsApiUrl.replace(this.apiKey, 'HIDDEN_KEY'))
 
     return await this.tryMultipleMethods(newsApiUrl, 'general')
   }
@@ -80,7 +103,7 @@ class NewsService {
       {
         name: 'Direct Fetch (CORS might fail)',
         fetch: async () => {
-          console.log('Trying direct fetch to NewsAPI...')
+          debugLog('Trying direct fetch to NewsAPI...')
           
           const response = await fetch(newsApiUrl, {
             headers: {
@@ -90,7 +113,7 @@ class NewsService {
           
           if (!response.ok) {
             const errorText = await response.text()
-            console.error('Direct fetch error response:', errorText)
+            debugError('Direct fetch error response:', errorText)
             throw new Error(`HTTP ${response.status}: ${errorText}`)
           }
           
@@ -101,7 +124,7 @@ class NewsService {
         name: 'AllOrigins Proxy',
         fetch: async () => {
           const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(newsApiUrl)}`
-          console.log('Trying AllOrigins proxy...')
+          debugLog('Trying AllOrigins proxy...')
           
           const response = await fetch(proxyUrl)
           if (!response.ok) {
@@ -122,7 +145,7 @@ class NewsService {
         name: 'CORS Proxy',
         fetch: async () => {
           const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(newsApiUrl)}`
-          console.log('Trying CORS proxy...')
+          debugLog('Trying CORS proxy...')
           
           const response = await fetch(proxyUrl)
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
@@ -134,11 +157,11 @@ class NewsService {
 
     for (const method of methods) {
       try {
-        console.log(`🔄 Trying ${method.name}...`)
+        debugLog(`🔄 Trying ${method.name}...`)
         
         const newsData: NewsApiResponse | NewsApiErrorResponse = await method.fetch()
         
-        console.log('Response received:', {
+        debugLog('Response received:', {
           status: newsData.status,
           hasArticles: 'articles' in newsData,
           articleCount: 'articles' in newsData ? newsData.articles?.length : 0
@@ -146,34 +169,36 @@ class NewsService {
         
         if (newsData.status === 'error') {
           const errorData = newsData as NewsApiErrorResponse
-          console.warn(`${method.name} API error:`, errorData.message, errorData.code)
+          debugWarn(`${method.name} API error:`, errorData.message, errorData.code)
           continue
         }
 
         const successData = newsData as NewsApiResponse
         
         if (!successData.articles || successData.articles.length === 0) {
-          console.warn(`${method.name} returned no articles`)
+          debugWarn(`${method.name} returned no articles`)
           continue
         }
         
-        console.log(`✅ ${method.name} successful! Found ${successData.articles.length} articles`)
+        debugLog(`✅ ${method.name} successful! Found ${successData.articles.length} articles`)
         
         return this.transformNewsData(successData.articles, category)
 
       } catch (error) {
-        console.warn(`❌ ${method.name} failed:`, error instanceof Error ? error.message : error)
+        debugWarn(`❌ ${method.name} failed:`, error instanceof Error ? error.message : error)
         continue
       }
     }
 
     // All methods failed - return mock data with error message
-    console.error('🚨 All fetch methods failed. Returning mock data.')
-    console.error('This might be due to:')
-    console.error('1. Invalid API key')
-    console.error('2. Rate limiting')
-    console.error('3. CORS issues')
-    console.error('4. Network connectivity')
+    if (import.meta.env.MODE === 'development') {
+      console.error('🚨 All fetch methods failed. Returning mock data.')
+      console.error('This might be due to:')
+      console.error('1. Invalid API key')
+      console.error('2. Rate limiting')
+      console.error('3. CORS issues')
+      console.error('4. Network connectivity')
+    }
     
     return this.getMockNewsData(category)
   }
@@ -187,7 +212,7 @@ class NewsService {
                         article.description !== '[Removed]'
         
         if (!isValid) {
-          console.log('Filtering out invalid article:', article.title)
+          debugLog('Filtering out invalid article:', article.title)
         }
         
         return isValid
@@ -210,7 +235,7 @@ class NewsService {
   }
 
   private getMockNewsData(category: NewsCategory): NewsArticle[] {
-    console.log('🎭 Generating mock news data for category:', category)
+    debugLog('🎭 Generating mock news data for category:', category)
     
     const mockArticles = [
       {
@@ -279,10 +304,10 @@ class NewsService {
       const response = await fetch(testUrl)
       const data = await response.json()
       
-      console.log('API Key test result:', data)
+      debugLog('API Key test result:', data)
       return data.status === 'ok'
     } catch (error) {
-      console.error('API Key test failed:', error)
+      debugError('API Key test failed:', error)
       return false
     }
   }
