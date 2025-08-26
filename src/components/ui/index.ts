@@ -4,3 +4,4 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { Input, type InputProps } from './input'
 export { Skeleton } from './skeleton'
 export { Badge, type BadgeProps } from './badge'
+export {DropDown , type DropDownProps} from './DropDown'

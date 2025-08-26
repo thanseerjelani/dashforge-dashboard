@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { CalendarDays, X, Plus } from 'lucide-react'
+import { DropDown } from '@/components/ui/DropDown'
+import { CalendarDays, X, Plus, Briefcase, User, ShoppingCart, Heart, MoreHorizontal } from 'lucide-react'
 import { Todo, TodoPriority, TodoCategory } from '@/types/todo'
 import { Calendar } from '@/components/ui/calendar'
 
@@ -33,12 +34,12 @@ const TodoForm = ({ todo, onSubmit, onCancel, isEditing = false }: TodoFormProps
         { value: 'high', label: 'High', color: 'bg-red-500' },
     ]
 
-    const categories: { value: TodoCategory; label: string }[] = [
-        { value: 'personal', label: 'Personal' },
-        { value: 'work', label: 'Work' },
-        { value: 'shopping', label: 'Shopping' },
-        { value: 'health', label: 'Health' },
-        { value: 'other', label: 'Other' },
+    const categories = [
+        { value: 'personal', label: 'Personal', color: 'bg-blue-500', icon: <User className="h-3 w-3" /> },
+        { value: 'work', label: 'Work', color: 'bg-purple-500', icon: <Briefcase className="h-3 w-3" /> },
+        { value: 'shopping', label: 'Shopping', color: 'bg-green-500', icon: <ShoppingCart className="h-3 w-3" /> },
+        { value: 'health', label: 'Health', color: 'bg-red-500', icon: <Heart className="h-3 w-3" /> },
+        { value: 'other', label: 'Other', color: 'bg-gray-500', icon: <MoreHorizontal className="h-3 w-3" /> },
     ]
 
     const handleAddTag = () => {
@@ -95,15 +96,15 @@ const TodoForm = ({ todo, onSubmit, onCancel, isEditing = false }: TodoFormProps
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Enter task description..."
                             rows={3}
-                            className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                         />
                     </div>
 
                     {/* Priority and Category */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-medium mb-2 block">Priority</label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 {priorities.map((p) => (
                                     <button
                                         key={p.value}
@@ -122,18 +123,14 @@ const TodoForm = ({ todo, onSubmit, onCancel, isEditing = false }: TodoFormProps
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium mb-2 block">Category</label>
-                            <select
+                            <DropDown
+                                label="Category"
                                 value={category}
-                                onChange={(e) => setCategory(e.target.value as TodoCategory)}
-                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            >
-                                {categories.map((c) => (
-                                    <option key={c.value} value={c.value}>
-                                        {c.label}
-                                    </option>
-                                ))}
-                            </select>
+                                onValueChange={(value) => setCategory(value as TodoCategory)}
+                                options={categories}
+                                placeholder="Select category"
+                                showColorDots={true}
+                            />
                         </div>
                     </div>
 
