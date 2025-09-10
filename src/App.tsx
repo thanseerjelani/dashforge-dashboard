@@ -5,6 +5,8 @@ import Dashboard from '@/pages/Dashboard'
 import Weather from '@/pages/Weather'
 import News from '@/pages/News'
 import Todo from '@/pages/Todo'
+import Analytics from '@/pages/Analytics'
+import Calendar from '@/pages/Calendar'
 import { useTheme } from '@/hooks/useTheme'
 import { useEffect } from 'react'
 
@@ -29,9 +31,9 @@ function App() {
             <Route path="weather" element={<Weather />} />
             <Route path="news" element={<News />} />
             <Route path="todos" element={<Todo />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="calendar" element={<Calendar />} />
             {/* Placeholder routes for future pages */}
-            <Route path="analytics" element={<ComingSoon title="Analytics" />} />
-            <Route path="calendar" element={<ComingSoon title="Calendar" />} />
             <Route path="settings" element={<ComingSoon title="Settings" />} />
             <Route path="profile" element={<ComingSoon title="Profile" />} />
           </Route>

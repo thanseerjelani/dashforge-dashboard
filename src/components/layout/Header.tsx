@@ -23,6 +23,9 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
             case '/news': return 'News'
             case '/todos': return 'Todo List'
             case '/settings': return 'Settings'
+            case '/analytics': return 'Analytics'
+            case '/calendar': return 'Calendar'
+            case '/profile': return 'Profile'
             default: return 'Dashboard'
         }
     }

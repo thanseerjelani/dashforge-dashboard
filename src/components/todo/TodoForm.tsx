@@ -153,8 +153,14 @@ const TodoForm = ({ todo, onSubmit, onCancel, isEditing = false }: TodoFormProps
                                     <Calendar
                                         selected={dueDate ? new Date(dueDate) : undefined}
                                         onSelect={(date) => {
-                                            setDueDate(date.toISOString().split('T')[0])
-                                            setShowCalendar(false)
+                                            // Fix: Use local date string to avoid timezone issues
+                                            const year = date.getFullYear();
+                                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                                            const day = String(date.getDate()).padStart(2, '0');
+                                            const localDateString = `${year}-${month}-${day}`;
+
+                                            setDueDate(localDateString);
+                                            setShowCalendar(false);
                                         }}
                                         onClose={() => setShowCalendar(false)}
                                         minDate={new Date()} // Prevent selecting past dates
