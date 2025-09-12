@@ -62,29 +62,39 @@ const Todo = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight">Todo Management</h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-xs md:text-lg">
                         Stay organized and manage your tasks efficiently
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                    {/* Icon buttons container - keep together on mobile but full width */}
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="flex-1 sm:flex-none"
+                        >
+                            <Filter className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                            className="flex-1 sm:flex-none"
+                        >
+                            {viewMode === 'grid' ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+                        </Button>
+                    </div>
+
+                    {/* Add Task button - full width on mobile */}
                     <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setShowFilters(!showFilters)}
+                        onClick={() => setShowForm(true)}
+                        className="w-full sm:w-auto"
                     >
-                        <Filter className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    >
-                        {viewMode === 'grid' ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
-                    </Button>
-                    <Button onClick={() => setShowForm(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         Add Task
                     </Button>

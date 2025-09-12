@@ -198,10 +198,10 @@ const Calendar = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-xs md:text-lg">
                         Manage your events and schedule
                     </p>
                 </div>
@@ -220,7 +220,7 @@ const Calendar = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 {/* Date Navigation */}
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center">
                         <Button variant="outline" size="icon" onClick={() => navigateMonth('prev')}>
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
@@ -234,44 +234,47 @@ const Calendar = () => {
                 </div>
 
                 {/* View Controls & Filters */}
-                <div className="flex items-center gap-2">
-                    {/* Search */}
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full sm:w-auto">
+                    {/* Search - Full width on mobile */}
+                    <div className="relative w-full sm:w-auto">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Search events..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 w-[200px]"
+                            className="pl-10 w-full sm:w-[200px]"
                         />
                     </div>
 
-                    {/* Category Filter */}
-                    <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                        {categories.map((category) => (
-                            <option key={category} value={category}>
-                                {category.charAt(0).toUpperCase() + category.slice(1)}
-                            </option>
-                        ))}
-                    </select>
+                    {/* Category Filter & View Toggle - Full width on mobile, split space */}
+                    <div className="flex gap-4 w-full sm:w-auto">
+                        {/* Category Filter */}
+                        <select
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            className="flex-1 sm:flex-none rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                            {categories.map((category) => (
+                                <option key={category} value={category}>
+                                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                                </option>
+                            ))}
+                        </select>
 
-                    {/* View Toggle */}
-                    <div className="flex border rounded-lg">
-                        {(['month', 'week', 'day'] as const).map((viewType) => (
-                            <Button
-                                key={viewType}
-                                variant={view === viewType ? 'default' : 'ghost'}
-                                size="sm"
-                                onClick={() => setView(viewType)}
-                                className="rounded-none first:rounded-l-lg last:rounded-r-lg"
-                            >
-                                {viewType.charAt(0).toUpperCase() + viewType.slice(1)}
-                            </Button>
-                        ))}
+                        {/* View Toggle */}
+                        <div className="flex border rounded-lg flex-1 sm:flex-none">
+                            {(['month', 'week', 'day'] as const).map((viewType) => (
+                                <Button
+                                    key={viewType}
+                                    variant={view === viewType ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setView(viewType)}
+                                    className="rounded-none first:rounded-l-lg last:rounded-r-lg flex-1 sm:flex-none"
+                                >
+                                    {viewType.charAt(0).toUpperCase() + viewType.slice(1)}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>

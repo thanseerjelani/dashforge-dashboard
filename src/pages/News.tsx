@@ -130,7 +130,7 @@ const News = () => {
             <div className="flex items-center justify-between">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight">Latest News</h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-xs md:text-lg">
                         Stay updated with the latest headlines and breaking news
                     </p>
                 </div>

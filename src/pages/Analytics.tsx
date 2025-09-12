@@ -29,12 +29,16 @@ const Analytics = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-xs md:text-lg">
                         Track your productivity and performance metrics
                     </p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button variant="outline" onClick={handleExport} className="gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-shrink-0">
+                    <Button
+                        variant="outline"
+                        onClick={handleExport}
+                        className="gap-2 flex-1 sm:flex-none sm:w-auto"
+                    >
                         <Download className="h-4 w-4" />
                         Export
                     </Button>
@@ -42,7 +46,7 @@ const Analytics = () => {
                         variant="outline"
                         onClick={handleRefresh}
                         disabled={isRefreshing}
-                        className="gap-2"
+                        className="gap-2 flex-1 sm:flex-none sm:w-auto"
                     >
                         <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                         Refresh
