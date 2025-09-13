@@ -57,7 +57,8 @@ const ProductivityChart = () => {
     const renderChart = () => {
         const commonProps = {
             data: productivityData,
-            margin: { top: 10, right: 10, left: 0, bottom: 0 }
+            // Reduced right margin to prevent overflow
+            margin: { top: 10, right: 5, left: 0, bottom: 0 }
         }
 
         const commonElements = (
@@ -139,7 +140,7 @@ const ProductivityChart = () => {
     }
 
     return (
-        <Card>
+        <Card className="w-full">
             <CardHeader>
                 <CardTitle>Productivity Trends</CardTitle>
                 <CardDescription>Track your task completion over time</CardDescription>
@@ -191,8 +192,9 @@ const ProductivityChart = () => {
                 </div>
             </CardHeader>
 
-            <CardContent>
-                <div className="h-80 w-full">
+            <CardContent className="p-6">
+                {/* Added overflow-hidden and proper width constraints */}
+                <div className="h-80 w-full overflow-hidden">
                     <ResponsiveContainer width="100%" height="100%">
                         {renderChart()}
                     </ResponsiveContainer>

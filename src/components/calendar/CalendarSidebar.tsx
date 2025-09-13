@@ -1,73 +1,45 @@
 // src/components/calendar/CalendarSidebar.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Clock } from 'lucide-react'
-import { CalendarEvent, EventCategory } from '@/types/calendar'
-import { cn } from '@/utils/cn'
-import { formatTime } from '@/utils/calendar'
+import { Clock, TrendingUp } from 'lucide-react'
+import { useCalendar } from '@/hooks/useCalendar'
+import { CalendarEvent } from '@/types/calendar'
+import { cn } from '@/lib/utils'
 
 interface CalendarSidebarProps {
-    events: CalendarEvent[]
-    selectedCategory: string
-    onCategoryChange: (category: string) => void
-    onEventClick: (event: CalendarEvent) => void
+    onEventClick?: (event: CalendarEvent) => void
 }
 
-const CalendarSidebar = ({
-    events,
-    selectedCategory,
-    onCategoryChange,
-    onEventClick
-}: CalendarSidebarProps) => {
-    const categoryColors = {
-        work: '#3b82f6',
-        personal: '#10b981',
-        health: '#ef4444',
-        social: '#f59e0b',
-        other: '#8b5cf6'
-    }
+const categoryColors = {
+    work: '#3b82f6',
+    personal: '#10b981',
+    health: '#ef4444',
+    social: '#f59e0b',
+    other: '#8b5cf6'
+}
 
-    const getEventsForDate = (date: Date) => {
-        return events.filter(event => {
-            const eventDate = new Date(event.startTime)
-            return eventDate.toDateString() === date.toDateString()
-        })
-    }
-
-    const getTodaysEvents = () => getEventsForDate(new Date())
-
-    const getUpcomingEvents = () => {
-        const today = new Date()
-        const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-
-        return events
-            .filter(event => {
-                const eventDate = new Date(event.startTime)
-                return eventDate > today && eventDate <= weekFromNow
-            })
-            .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-            .slice(0, 5)
-    }
-
-    const getCategoryCounts = () => {
-        const counts: Record<EventCategory, number> = {
-            work: 0,
-            personal: 0,
-            health: 0,
-            social: 0,
-            other: 0
-        }
-
-        events.forEach(event => {
-            counts[event.category]++
-        })
-
-        return counts
-    }
+const CalendarSidebar = ({ onEventClick }: CalendarSidebarProps) => {
+    const {
+        getTodaysEvents,
+        getUpcomingEvents,
+        getEventStats,
+        formatTime,
+        formatDate,
+        selectedCategory,
+        setSelectedCategory
+    } = useCalendar()
 
     const todaysEvents = getTodaysEvents()
-    const upcomingEvents = getUpcomingEvents()
-    const categoryCounts = getCategoryCounts()
+    const upcomingEvents = getUpcomingEvents(7)
+    const stats = getEventStats()
+
+    const handleEventClick = (event: CalendarEvent) => {
+        onEventClick?.(event)
+    }
+
+    const handleCategoryClick = (category: string) => {
+        setSelectedCategory(category === selectedCategory ? 'all' : category)
+    }
 
     return (
         <div className="space-y-6">
@@ -79,7 +51,7 @@ const CalendarSidebar = ({
                         Today's Events
                     </CardTitle>
                     <CardDescription>
-                        {new Date().toLocaleDateString('en-US', {
+                        {formatDate(new Date(), {
                             weekday: 'long',
                             month: 'short',
                             day: 'numeric'
@@ -95,7 +67,7 @@ const CalendarSidebar = ({
                                 <div
                                     key={event.id}
                                     className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => onEventClick(event)}
+                                    onClick={() => handleEventClick(event)}
                                 >
                                     <div
                                         className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
@@ -104,8 +76,15 @@ const CalendarSidebar = ({
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium truncate">{event.title}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                                            {event.isAllDay ? 'All day' : (
+                                                `${formatTime(new Date(event.startTime))} - ${formatTime(new Date(event.endTime))}`
+                                            )}
                                         </p>
+                                        {event.location && (
+                                            <p className="text-xs text-muted-foreground truncate">
+                                                📍 {event.location}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -125,11 +104,11 @@ const CalendarSidebar = ({
                         {upcomingEvents.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No upcoming events</p>
                         ) : (
-                            upcomingEvents.map((event) => (
+                            upcomingEvents.slice(0, 5).map((event) => (
                                 <div
                                     key={event.id}
                                     className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => onEventClick(event)}
+                                    onClick={() => handleEventClick(event)}
                                 >
                                     <div
                                         className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
@@ -138,15 +117,59 @@ const CalendarSidebar = ({
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium truncate">{event.title}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            {new Date(event.startTime).toLocaleDateString('en-US', {
+                                            {formatDate(new Date(event.startTime), {
                                                 month: 'short',
                                                 day: 'numeric'
-                                            })} at {formatTime(event.startTime)}
+                                            })} at {formatTime(new Date(event.startTime))}
                                         </p>
+                                        {event.priority === 'high' && (
+                                            <Badge variant="destructive" className="text-xs mt-1">
+                                                High Priority
+                                            </Badge>
+                                        )}
                                     </div>
                                 </div>
                             ))
                         )}
+                        {upcomingEvents.length > 5 && (
+                            <p className="text-xs text-muted-foreground text-center pt-2">
+                                +{upcomingEvents.length - 5} more upcoming events
+                            </p>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Event Statistics */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Event Stats
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-muted/50 rounded-lg">
+                                <div className="text-2xl font-bold text-primary">{stats.total}</div>
+                                <div className="text-xs text-muted-foreground">Total Events</div>
+                            </div>
+                            <div className="text-center p-3 bg-muted/50 rounded-lg">
+                                <div className="text-2xl font-bold text-green-600">{stats.today}</div>
+                                <div className="text-xs text-muted-foreground">Today</div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-muted/50 rounded-lg">
+                                <div className="text-2xl font-bold text-blue-600">{stats.upcoming}</div>
+                                <div className="text-xs text-muted-foreground">Upcoming</div>
+                            </div>
+                            <div className="text-center p-3 bg-muted/50 rounded-lg">
+                                <div className="text-2xl font-bold text-orange-600">{stats.overdue}</div>
+                                <div className="text-xs text-muted-foreground">Past Due</div>
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -155,19 +178,38 @@ const CalendarSidebar = ({
             <Card>
                 <CardHeader>
                     <CardTitle>Categories</CardTitle>
+                    <CardDescription>Filter by category</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-2">
+                        {/* All Categories */}
+                        <div
+                            className={cn(
+                                "flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors",
+                                selectedCategory === 'all' ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
+                            )}
+                            onClick={() => handleCategoryClick('all')}
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+                                <span className="text-sm font-medium">All Categories</span>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                                {stats.total}
+                            </Badge>
+                        </div>
+
+                        {/* Individual Categories */}
                         {Object.entries(categoryColors).map(([category, color]) => {
-                            const count = categoryCounts[category as EventCategory]
+                            const count = stats.byCategory[category as keyof typeof stats.byCategory]
                             return (
                                 <div
                                     key={category}
                                     className={cn(
                                         "flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors",
-                                        selectedCategory === category ? "bg-muted" : "hover:bg-muted/50"
+                                        selectedCategory === category ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
                                     )}
-                                    onClick={() => onCategoryChange(category)}
+                                    onClick={() => handleCategoryClick(category)}
                                 >
                                     <div className="flex items-center gap-2">
                                         <div
@@ -182,6 +224,44 @@ const CalendarSidebar = ({
                                 </div>
                             )
                         })}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Priority Breakdown */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Priority Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-red-50 dark:bg-red-900/20">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-red-500" />
+                                <span className="text-sm font-medium">High Priority</span>
+                            </div>
+                            <Badge variant="destructive" className="text-xs">
+                                {stats.byPriority.high}
+                            </Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                                <span className="text-sm font-medium">Medium Priority</span>
+                            </div>
+                            <Badge variant="default" className="text-xs">
+                                {stats.byPriority.medium}
+                            </Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 dark:bg-green-900/20">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-green-500" />
+                                <span className="text-sm font-medium">Low Priority</span>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                                {stats.byPriority.low}
+                            </Badge>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
