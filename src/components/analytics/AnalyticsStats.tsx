@@ -5,10 +5,13 @@ import { Target, TrendingUp, Clock, Zap } from 'lucide-react'
 import { useTodos } from '@/hooks/useTodos'
 
 const AnalyticsStats = () => {
-    const { allTodos, stats } = useTodos()
+    const { todos: allTodos, stats } = useTodos()
 
     // Generate analytics data
     const analyticsData = useMemo(() => {
+        // Ensure allTodos is an array
+        const todos = allTodos || []
+
         // Productivity over time (last 7 days)
         const last7Days = Array.from({ length: 7 }, (_, i) => {
             const date = new Date()
@@ -18,10 +21,10 @@ const AnalyticsStats = () => {
 
         const productivityData = last7Days.map(date => {
             const dateStr = date.toDateString()
-            const completedTodos = allTodos.filter(todo =>
+            const completedTodos = todos.filter(todo =>
                 todo.completed && new Date(todo.updatedAt).toDateString() === dateStr
             ).length
-            const createdTodos = allTodos.filter(todo =>
+            const createdTodos = todos.filter(todo =>
                 new Date(todo.createdAt).toDateString() === dateStr
             ).length
 
@@ -33,16 +36,23 @@ const AnalyticsStats = () => {
             }
         })
 
-        // Performance metrics
-        const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
-        const overdueRate = stats.total > 0 ? Math.round((stats.overdue / stats.total) * 100) : 0
+        // Performance metrics with safe defaults
+        const safeStats = {
+            total: stats?.total || 0,
+            completed: stats?.completed || 0,
+            overdue: stats?.overdue || 0,
+            pending: stats?.pending || 0
+        }
+
+        const completionRate = safeStats.total > 0 ? Math.round((safeStats.completed / safeStats.total) * 100) : 0
+        const overdueRate = safeStats.total > 0 ? Math.round((safeStats.overdue / safeStats.total) * 100) : 0
 
         return {
             productivityData,
             completionRate,
             overdueRate,
-            totalTasks: stats.total,
-            activeTasks: stats.pending
+            totalTasks: safeStats.total,
+            activeTasks: safeStats.pending
         }
     }, [allTodos, stats])
 
@@ -70,7 +80,7 @@ const AnalyticsStats = () => {
                 <CardContent>
                     <div className="text-2xl font-bold">{analyticsData.completionRate}%</div>
                     <p className="text-xs text-muted-foreground">
-                        {stats.completed} completed tasks
+                        {stats?.completed || 0} completed tasks
                     </p>
                 </CardContent>
                 <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-green-500 to-green-600" />
@@ -82,7 +92,7 @@ const AnalyticsStats = () => {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
+                    <div className="text-2xl font-bold text-red-600">{stats?.overdue || 0}</div>
                     <p className="text-xs text-muted-foreground">
                         {analyticsData.overdueRate}% of total
                     </p>

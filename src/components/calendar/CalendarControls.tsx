@@ -1,4 +1,4 @@
-// src/components/calendar/CalendarControls.tsx
+// src/components/calendar/CalendarControls.tsx - Updated to use context
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -9,7 +9,7 @@ import {
     Calendar as CalendarIcon,
     Plus
 } from 'lucide-react'
-import { useCalendar } from '@/hooks/useCalendar'
+import { useCalendarContext } from './CalendarProvider'
 
 interface CalendarControlsProps {
     onNewEvent: () => void
@@ -27,7 +27,7 @@ const CalendarControls = ({ onNewEvent }: CalendarControlsProps) => {
         setSearchQuery,
         setSelectedCategory,
         formatDate
-    } = useCalendar()
+    } = useCalendarContext()
 
     const categories = ['all', 'work', 'personal', 'health', 'social', 'other']
 

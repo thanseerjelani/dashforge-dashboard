@@ -14,7 +14,7 @@ import {
     Calendar,
     AlertCircle
 } from 'lucide-react'
-import { useCalendar } from '@/hooks/useCalendar'
+import { useCalendarContext } from './CalendarProvider'
 
 interface EventDetailProps {
     event: CalendarEvent
@@ -23,12 +23,19 @@ interface EventDetailProps {
 }
 
 const EventDetail = ({ event, onClose, onEdit }: EventDetailProps) => {
-    const { deleteEvent, formatTime, formatDate } = useCalendar()
+    const { deleteEvent, formatTime, formatDate } = useCalendarContext()
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this event?')) {
-            deleteEvent(event.id)
-            onClose()
+            try {
+                console.log('🗑️ EventDetail: Deleting event:', event.id)
+                await deleteEvent(event.id)
+                console.log('✅ Event deleted successfully, closing detail view')
+                onClose()
+            } catch (error) {
+                console.error('❌ Error deleting event:', error)
+                // Optionally show error message to user
+            }
         }
     }
 

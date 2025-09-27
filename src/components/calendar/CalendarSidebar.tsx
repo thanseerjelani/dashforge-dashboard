@@ -1,8 +1,8 @@
-// src/components/calendar/CalendarSidebar.tsx
+// src/components/calendar/CalendarSidebar.tsx - Development-only logs
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Clock, TrendingUp } from 'lucide-react'
-import { useCalendar } from '@/hooks/useCalendar'
+import { useCalendarContext } from './CalendarProvider'
 import { CalendarEvent } from '@/types/calendar'
 import { cn } from '@/lib/utils'
 
@@ -18,6 +18,13 @@ const categoryColors = {
     other: '#8b5cf6'
 }
 
+// Helper function for development-only logging
+const devLog = (...args: unknown[]) => {
+    if (import.meta.env.DEV) {
+        console.log(...args)
+    }
+}
+
 const CalendarSidebar = ({ onEventClick }: CalendarSidebarProps) => {
     const {
         getTodaysEvents,
@@ -27,7 +34,9 @@ const CalendarSidebar = ({ onEventClick }: CalendarSidebarProps) => {
         formatDate,
         selectedCategory,
         setSelectedCategory
-    } = useCalendar()
+    } = useCalendarContext()
+
+    devLog('🎯 CalendarSidebar render - Selected Category:', selectedCategory)
 
     const todaysEvents = getTodaysEvents()
     const upcomingEvents = getUpcomingEvents(7)
@@ -38,11 +47,19 @@ const CalendarSidebar = ({ onEventClick }: CalendarSidebarProps) => {
     }
 
     const handleCategoryClick = (category: string) => {
+        devLog('🎯 Category clicked:', category, 'Current:', selectedCategory)
         setSelectedCategory(category === selectedCategory ? 'all' : category)
     }
 
     return (
         <div className="space-y-6">
+            {/* Debug Info - Only show in development */}
+            {import.meta.env.DEV && (
+                <div className="bg-blue-100 p-2 rounded text-xs">
+                    <strong>Sidebar Debug:</strong> Current category filter: "{selectedCategory}"
+                </div>
+            )}
+
             {/* Today's Events */}
             <Card>
                 <CardHeader>
@@ -152,21 +169,21 @@ const CalendarSidebar = ({ onEventClick }: CalendarSidebarProps) => {
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                             <div className="text-center p-3 bg-muted/50 rounded-lg">
-                                <div className="text-2xl font-bold text-primary">{stats.total}</div>
+                                <div className="text-2xl font-bold text-primary">{stats.totalEvents}</div>
                                 <div className="text-xs text-muted-foreground">Total Events</div>
                             </div>
                             <div className="text-center p-3 bg-muted/50 rounded-lg">
-                                <div className="text-2xl font-bold text-green-600">{stats.today}</div>
+                                <div className="text-2xl font-bold text-green-600">{stats.todayEvents}</div>
                                 <div className="text-xs text-muted-foreground">Today</div>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="text-center p-3 bg-muted/50 rounded-lg">
-                                <div className="text-2xl font-bold text-blue-600">{stats.upcoming}</div>
+                                <div className="text-2xl font-bold text-blue-600">{stats.upcomingEvents}</div>
                                 <div className="text-xs text-muted-foreground">Upcoming</div>
                             </div>
                             <div className="text-center p-3 bg-muted/50 rounded-lg">
-                                <div className="text-2xl font-bold text-orange-600">{stats.overdue}</div>
+                                <div className="text-2xl font-bold text-orange-600">{stats.overdueEvents}</div>
                                 <div className="text-xs text-muted-foreground">Past Due</div>
                             </div>
                         </div>
@@ -195,7 +212,7 @@ const CalendarSidebar = ({ onEventClick }: CalendarSidebarProps) => {
                                 <span className="text-sm font-medium">All Categories</span>
                             </div>
                             <Badge variant="outline" className="text-xs">
-                                {stats.total}
+                                {stats.totalEvents}
                             </Badge>
                         </div>
 

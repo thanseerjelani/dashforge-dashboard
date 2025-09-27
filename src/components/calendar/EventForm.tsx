@@ -1,4 +1,4 @@
-// src/components/calendar/EventForm.tsx
+// src/components/calendar/EventForm.tsx - FIXED VERSION
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { CalendarEvent, EventCategory, EventPriority, CreateEventData } from '@/types/calendar'
 import { Calendar, MapPin, Users, Plus, X, Save, AlertCircle } from 'lucide-react'
-import { useCalendar } from '@/hooks/useCalendar'
+import { useCalendarContext } from './CalendarProvider' // FIXED: Use context instead of hook
 
 interface EventFormProps {
     event?: CalendarEvent | null
@@ -32,8 +32,23 @@ const predefinedColors = [
     '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'
 ]
 
+// FIXED: Helper function to format date without timezone issues
+const formatDateForInput = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+// FIXED: Helper function to format time without timezone issues
+const formatTimeForInput = (date: Date): string => {
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${hours}:${minutes}`
+}
+
 const EventForm = ({ event, onClose, onSuccess, defaultDate }: EventFormProps) => {
-    const { addEvent, updateEvent, isLoading } = useCalendar()
+    const { addEvent, updateEvent, loading } = useCalendarContext() // FIXED: Use context and correct property name
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [attendeeInput, setAttendeeInput] = useState('')
 
@@ -47,10 +62,10 @@ const EventForm = ({ event, onClose, onSuccess, defaultDate }: EventFormProps) =
             return {
                 title: event.title,
                 description: event.description || '',
-                startDate: startDate.toISOString().split('T')[0],
-                startTime: startDate.toTimeString().slice(0, 5),
-                endDate: endDate.toISOString().split('T')[0],
-                endTime: endDate.toTimeString().slice(0, 5),
+                startDate: formatDateForInput(startDate), // FIXED: Use helper function
+                startTime: formatTimeForInput(startDate), // FIXED: Use helper function
+                endDate: formatDateForInput(endDate),     // FIXED: Use helper function
+                endTime: formatTimeForInput(endDate),     // FIXED: Use helper function
                 category: event.category,
                 priority: event.priority,
                 location: event.location || '',
@@ -66,10 +81,10 @@ const EventForm = ({ event, onClose, onSuccess, defaultDate }: EventFormProps) =
             return {
                 title: '',
                 description: '',
-                startDate: start.toISOString().split('T')[0],
-                startTime: start.toTimeString().slice(0, 5),
-                endDate: end.toISOString().split('T')[0],
-                endTime: end.toTimeString().slice(0, 5),
+                startDate: formatDateForInput(start), // FIXED: Use helper function
+                startTime: formatTimeForInput(start), // FIXED: Use helper function
+                endDate: formatDateForInput(end),     // FIXED: Use helper function
+                endTime: formatTimeForInput(end),     // FIXED: Use helper function
                 category: 'personal' as EventCategory,
                 priority: 'medium' as EventPriority,
                 location: '',
@@ -131,16 +146,14 @@ const EventForm = ({ event, onClose, onSuccess, defaultDate }: EventFormProps) =
         }
 
         try {
-            const startDateTime = new Date(
-                formData.isAllDay
-                    ? `${formData.startDate}T00:00:00`
-                    : `${formData.startDate}T${formData.startTime}:00`
-            )
-            const endDateTime = new Date(
-                formData.isAllDay
-                    ? `${formData.endDate}T23:59:59`
-                    : `${formData.endDate}T${formData.endTime}:00`
-            )
+            // FIXED: Create dates without timezone conversion issues
+            const startDateTime = formData.isAllDay
+                ? new Date(`${formData.startDate}T00:00:00`)
+                : new Date(`${formData.startDate}T${formData.startTime}:00`)
+
+            const endDateTime = formData.isAllDay
+                ? new Date(`${formData.endDate}T23:59:59`)
+                : new Date(`${formData.endDate}T${formData.endTime}:00`)
 
             const eventData: CreateEventData = {
                 title: formData.title.trim(),
@@ -155,16 +168,22 @@ const EventForm = ({ event, onClose, onSuccess, defaultDate }: EventFormProps) =
                 isAllDay: formData.isAllDay
             }
 
+            console.log('📝 Submitting event data:', eventData) // Debug log
+
             if (isEditing && event) {
+                console.log('✏️ Updating event:', event.id)
                 await updateEvent(event.id, eventData)
+                console.log('✅ Event updated successfully')
             } else {
+                console.log('➕ Creating new event')
                 await addEvent(eventData)
+                console.log('✅ Event created successfully')
             }
 
             onSuccess?.()
             onClose()
         } catch (error) {
-            console.error('Error saving event:', error)
+            console.error('❌ Error saving event:', error)
             setErrors({ submit: 'Failed to save event. Please try again.' })
         }
     }
@@ -207,6 +226,11 @@ const EventForm = ({ event, onClose, onSuccess, defaultDate }: EventFormProps) =
                         <Button variant="ghost" size="icon" onClick={onClose}>
                             <X className="h-4 w-4" />
                         </Button>
+                    </div>
+                    {/* Debug info */}
+                    <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
+                        Debug: Default date = {defaultDate?.toLocaleDateString()},
+                        Form start date = {formData.startDate}
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -434,9 +458,9 @@ const EventForm = ({ event, onClose, onSuccess, defaultDate }: EventFormProps) =
                             <Button type="button" variant="outline" onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isLoading} className="gap-2">
+                            <Button type="submit" disabled={loading} className="gap-2">
                                 <Save className="h-4 w-4" />
-                                {isLoading ? 'Saving...' : (isEditing ? 'Update Event' : 'Create Event')}
+                                {loading ? 'Saving...' : (isEditing ? 'Update Event' : 'Create Event')}
                             </Button>
                         </div>
                     </form>

@@ -139,7 +139,7 @@ const Dashboard = () => {
                             <div className="space-y-3">
                                 <h4 className="text-sm font-medium">Tasks by Category</h4>
                                 <div className="space-y-2">
-                                    {Object.entries(stats.byCategory)
+                                    {stats.byCategory && Object.entries(stats.byCategory)
                                         .filter(([_, count]) => count > 0)
                                         .map(([category, count]) => (
                                             <div key={category} className="flex items-center justify-between text-sm">
@@ -147,6 +147,9 @@ const Dashboard = () => {
                                                 <Badge variant="outline">{count}</Badge>
                                             </div>
                                         ))}
+                                    {(!stats.byCategory || Object.keys(stats.byCategory).length === 0) && (
+                                        <p className="text-sm text-muted-foreground">No categories available</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -154,7 +157,7 @@ const Dashboard = () => {
                             <div className="space-y-3">
                                 <h4 className="text-sm font-medium">Tasks by Priority</h4>
                                 <div className="space-y-2">
-                                    {Object.entries(stats.byPriority)
+                                    {stats.byPriority && Object.entries(stats.byPriority)
                                         .filter(([_, count]) => count > 0)
                                         .map(([priority, count]) => (
                                             <div key={priority} className="flex items-center justify-between text-sm">
@@ -169,6 +172,9 @@ const Dashboard = () => {
                                                 <Badge variant="outline">{count}</Badge>
                                             </div>
                                         ))}
+                                    {(!stats.byPriority || Object.keys(stats.byPriority).length === 0) && (
+                                        <p className="text-sm text-muted-foreground">No priorities available</p>
+                                    )}
                                 </div>
                             </div>
 

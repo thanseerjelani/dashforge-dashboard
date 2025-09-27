@@ -90,12 +90,15 @@ const TodoStats = ({ stats }: TodoStatsProps) => {
                             By Category
                         </h4>
                         <div className="space-y-2">
-                            {Object.entries(stats.byCategory).map(([category, count]) => (
+                            {stats.byCategory && Object.entries(stats.byCategory).map(([category, count]) => (
                                 <div key={category} className="flex justify-between items-center">
                                     <span className="text-sm capitalize">{category}</span>
                                     <span className="text-sm font-medium">{count}</span>
                                 </div>
                             ))}
+                            {(!stats.byCategory || Object.keys(stats.byCategory).length === 0) && (
+                                <p className="text-sm text-muted-foreground">No categories available</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -107,7 +110,7 @@ const TodoStats = ({ stats }: TodoStatsProps) => {
                             By Priority
                         </h4>
                         <div className="space-y-2">
-                            {Object.entries(stats.byPriority).map(([priority, count]) => (
+                            {stats.byPriority && Object.entries(stats.byPriority).map(([priority, count]) => (
                                 <div key={priority} className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <div className={`w-2 h-2 rounded-full ${priority === 'high' ? 'bg-red-500' :
@@ -118,6 +121,9 @@ const TodoStats = ({ stats }: TodoStatsProps) => {
                                     <span className="text-sm font-medium">{count}</span>
                                 </div>
                             ))}
+                            {(!stats.byPriority || Object.keys(stats.byPriority).length === 0) && (
+                                <p className="text-sm text-muted-foreground">No priorities available</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

@@ -1,9 +1,9 @@
-// src/pages/Calendar.tsx
+// src/pages/Calendar.tsx - Updated to use CalendarProvider
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar as CalendarIcon } from 'lucide-react'
-import { useCalendar } from '@/hooks/useCalendar'
+import { CalendarProvider, useCalendarContext } from '@/components/calendar/CalendarProvider'
 import CalendarControls from '@/components/calendar/CalendarControls'
 import CalendarGrid from '@/components/calendar/CalendarGrid'
 import CalendarSidebar from '@/components/calendar/CalendarSidebar'
@@ -11,8 +11,9 @@ import EventForm from '@/components/calendar/EventForm'
 import EventDetail from '@/components/calendar/EventDetail'
 import { CalendarEvent } from '@/types/calendar'
 
-const Calendar = () => {
-    const { events, selectedEvent, setSelectedEvent } = useCalendar()
+// Inner component that uses the calendar context
+const CalendarContent = () => {
+    const { events, selectedEvent, setSelectedEvent } = useCalendarContext()
     const [showEventForm, setShowEventForm] = useState(false)
     const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -108,6 +109,15 @@ const Calendar = () => {
                 />
             )}
         </div>
+    )
+}
+
+// Main component that provides the calendar context
+const Calendar = () => {
+    return (
+        <CalendarProvider>
+            <CalendarContent />
+        </CalendarProvider>
     )
 }
 

@@ -26,10 +26,13 @@ import { useTodos } from '@/hooks/useTodos'
 const ProductivityChart = () => {
     const [dateRange, setDateRange] = useState('7d')
     const [chartType, setChartType] = useState<'line' | 'area' | 'bar'>('area')
-    const { allTodos } = useTodos()
+    const { todos: allTodos } = useTodos()
 
     // Generate productivity data
     const productivityData = useMemo(() => {
+        // Ensure allTodos is an array
+        const todos = allTodos || []
+
         const last7Days = Array.from({ length: 7 }, (_, i) => {
             const date = new Date()
             date.setDate(date.getDate() - (6 - i))
@@ -38,10 +41,10 @@ const ProductivityChart = () => {
 
         return last7Days.map(date => {
             const dateStr = date.toDateString()
-            const completedTodos = allTodos.filter(todo =>
+            const completedTodos = todos.filter(todo =>
                 todo.completed && new Date(todo.updatedAt).toDateString() === dateStr
             ).length
-            const createdTodos = allTodos.filter(todo =>
+            const createdTodos = todos.filter(todo =>
                 new Date(todo.createdAt).toDateString() === dateStr
             ).length
 

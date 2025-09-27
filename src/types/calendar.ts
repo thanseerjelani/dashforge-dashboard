@@ -101,3 +101,47 @@ export interface EventFormData {
     recurring?: RecurringPattern
     reminders?: Omit<EventReminder, 'id'>[]
 }
+
+
+export interface CalendarContextType {
+  // State
+  events: CalendarEvent[]
+  allEvents: CalendarEvent[]
+  selectedEvent: CalendarEvent | null
+  currentDate: Date
+  view: 'month' | 'week' | 'day'
+  searchQuery: string
+  selectedCategory: string
+  filters: {
+    categories: string[]
+    priorities: string[]
+    showCompleted: boolean
+  }
+  loading: boolean
+  error: string | null
+  calendarData: CalendarDay[]
+  stats: CalendarStats
+
+  // Actions
+  addEvent: (eventData: CreateEventData) => Promise<void>
+  updateEvent: (id: string, updates: Partial<CreateEventData>) => Promise<void>
+  deleteEvent: (id: string) => Promise<void>
+  setSelectedEvent: (event: CalendarEvent | null) => void
+  setCurrentDate: (date: Date) => void
+  setView: (view: 'month' | 'week' | 'day') => void
+  setSearchQuery: (query: string) => void
+  setSelectedCategory: (category: string) => void
+  setFilters: (filters: Partial<{ categories: string[]; priorities: string[]; showCompleted: boolean }>) => void
+
+  // Helper functions
+  getEventsForDate: (date: Date, useFiltered?: boolean) => CalendarEvent[]
+  getTodaysEvents: () => CalendarEvent[]
+  getUpcomingEvents: (days?: number) => CalendarEvent[]
+  getEventStats: () => CalendarStats
+  navigateMonth: (direction: 'prev' | 'next') => void
+  navigateToToday: () => void
+  formatTime: (date: Date) => string
+  formatDate: (date: Date, options?: Intl.DateTimeFormatOptions) => string
+  isToday: (date: Date) => boolean
+  refetch: () => void
+}
