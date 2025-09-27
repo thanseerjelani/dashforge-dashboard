@@ -4,9 +4,12 @@ import { useTodos } from './useTodos'
 import { AnalyticsData, ProductivityData, CategoryData, PriorityData } from '@/types'
 
 export const useAnalytics = () => {
-    const { allTodos, stats } = useTodos()
+    const { todos: allTodos, stats } = useTodos()
 
     const analyticsData: AnalyticsData = useMemo(() => {
+        // Make sure allTodos exists and has data
+        if (!allTodos) return getEmptyAnalyticsData()
+
         // Productivity over time (last 7 days)
         const last7Days = Array.from({ length: 7 }, (_, i) => {
             const date = new Date()
@@ -64,7 +67,29 @@ export const useAnalytics = () => {
         }
     }, [allTodos, stats])
 
+    // Helper function for empty state
+    const getEmptyAnalyticsData = (): AnalyticsData => ({
+        productivityData: [],
+        categoryData: [],
+        priorityData: [],
+        completionRate: 0,
+        overdueRate: 0,
+        totalTasks: 0,
+        activeTasks: 0
+    })
+
     const getPerformanceMetrics = () => {
+        if (analyticsData.productivityData.length === 0) {
+            return {
+                bestDay: 'No data',
+                bestDayCount: 0,
+                currentStreak: 0,
+                dailyAverage: 0,
+                completionRate: 0,
+                totalCompleted: 0
+            }
+        }
+
         const bestDay = analyticsData.productivityData.reduce((best, day) =>
             day.completed > best.completed ? day : best
         )
