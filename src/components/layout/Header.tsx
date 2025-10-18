@@ -1,10 +1,11 @@
 // src/components/layout/Header.tsx
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Moon, Sun, Menu, X, Bell, Search } from 'lucide-react'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { Moon, Sun, Menu, X, Bell, Search, LogOut, User as UserIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTheme } from '@/hooks/useTheme'
+import { useAuth } from '@/hooks/useAuth'
 
 interface HeaderProps {
     onMobileMenuToggle: () => void
@@ -13,8 +14,11 @@ interface HeaderProps {
 
 export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) => {
     const { isDark, toggleTheme } = useTheme()
+    const { user, logout } = useAuth()
     const location = useLocation()
+    const navigate = useNavigate()
     const [searchQuery, setSearchQuery] = useState('')
+    const [showUserMenu, setShowUserMenu] = useState(false)
 
     const getPageTitle = () => {
         switch (location.pathname) {
@@ -28,6 +32,11 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
             case '/profile': return 'Profile'
             default: return 'Dashboard'
         }
+    }
+
+    const handleLogout = async () => {
+        await logout()
+        navigate('/login')
     }
 
     return (
@@ -90,12 +99,58 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
                         {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                     </Button>
 
-                    <div className="hidden sm:flex items-center gap-2 ml-4 pl-4 border-l">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-primary to-sky-700" />
-                        <div className="hidden md:block">
-                            <p className="text-sm font-medium">Thanseer Jelani</p>
-                            <p className="text-xs text-muted-foreground">Developer</p>
-                        </div>
+                    {/* User Menu */}
+                    <div className="relative ml-4 pl-4 border-l">
+                        <button
+                            onClick={() => setShowUserMenu(!showUserMenu)}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-primary to-sky-700 flex items-center justify-center text-white font-semibold text-sm">
+                                {user?.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div className="hidden md:block text-left">
+                                <p className="text-sm font-medium">{user?.name || 'User'}</p>
+                                <p className="text-xs text-muted-foreground">{user?.email || ''}</p>
+                            </div>
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showUserMenu && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setShowUserMenu(false)}
+                                />
+                                <div className="absolute right-0 mt-2 w-56 rounded-lg border bg-background shadow-lg z-50">
+                                    <div className="p-3 border-b">
+                                        <p className="font-medium">{user?.name}</p>
+                                        <p className="text-sm text-muted-foreground truncate">
+                                            {user?.email}
+                                        </p>
+                                    </div>
+                                    <div className="p-2">
+                                        <Link
+                                            to="/profile"
+                                            onClick={() => setShowUserMenu(false)}
+                                            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                                        >
+                                            <UserIcon className="h-4 w-4" />
+                                            Profile
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                setShowUserMenu(false)
+                                                handleLogout()
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors w-full text-left text-red-600 dark:text-red-400"
+                                        >
+                                            <LogOut className="h-4 w-4" />
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

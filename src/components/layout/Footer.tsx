@@ -11,14 +11,12 @@ export const Footer = () => {
                         <span className="text-sm font-medium">DashForge</span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Built with React, TypeScript & Tailwind CSS</span>
-                        <span>•</span>
-                        <span>© 2025 thanseerjelani</span>
+                    <div className="text-sm text-muted-foreground">
+                        © 2025 Thanseer Jelani. All rights reserved.
                     </div>
 
                     <div className="text-sm text-muted-foreground">
-                        Version 1.0.0
+                        v1.0.0
                     </div>
                 </div>
             </div>

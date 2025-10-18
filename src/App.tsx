@@ -1,12 +1,21 @@
 // src/App.tsx
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { Layout } from '@/components/layout/Layout'
+import { ProtectedRoute } from '@/components/common/ProtectedRoute'
 import Dashboard from '@/pages/Dashboard'
 import Weather from '@/pages/Weather'
 import News from '@/pages/News'
 import Todo from '@/pages/Todo'
 import Analytics from '@/pages/Analytics'
 import Calendar from '@/pages/Calendar'
+import Profile from '@/pages/Profile'
+import Login from '@/pages/Login'
+import Register from '@/pages/Register'
+import ForgotPassword from '@/pages/ForgotPassword'
+import VerifyOtp from '@/pages/VerifyOtp'
+import ResetPassword from '@/pages/ResetPassword'
+import ChangePassword from '@/pages/ChangePassword'
 import { useTheme } from '@/hooks/useTheme'
 import { useEffect } from 'react'
 
@@ -25,18 +34,44 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-background text-foreground">
+        {/* Toast Notifications */}
+        <Toaster
+          position="top-right"
+          expand={false}
+          richColors
+          closeButton
+        />
+
         <Routes>
-          <Route path="/" element={<Layout />}>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="weather" element={<Weather />} />
             <Route path="news" element={<News />} />
             <Route path="todos" element={<Todo />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="calendar" element={<Calendar />} />
-            {/* Placeholder routes for future pages */}
+            <Route path="profile" element={<Profile />} />
+            <Route path="change-password" element={<ChangePassword />} />
             <Route path="settings" element={<ComingSoon title="Settings" />} />
-            <Route path="profile" element={<ComingSoon title="Profile" />} />
           </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>

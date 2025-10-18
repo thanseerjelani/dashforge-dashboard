@@ -1,4 +1,3 @@
-
 // src/services/calendarApi.ts
 import axios from 'axios'
 import { CalendarEvent, CalendarFilters, CalendarStats, CreateEventData } from '@/types/calendar'
@@ -11,6 +10,56 @@ const calendarApi = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+// ✨ ADD JWT REQUEST INTERCEPTOR
+calendarApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// ✨ ADD JWT RESPONSE INTERCEPTOR FOR TOKEN REFRESH
+calendarApi.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+
+    // If error is 401 and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+
+      try {
+        const refreshToken = localStorage.getItem('refreshToken')
+        if (refreshToken) {
+          // Import authApiService dynamically to avoid circular dependency
+          const { authApiService } = await import('./authApi')
+          const response = await authApiService.refreshToken({ refreshToken })
+          const { accessToken } = response.data.data
+
+          localStorage.setItem('accessToken', accessToken)
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`
+
+          return calendarApi(originalRequest)
+        }
+      } catch (refreshError) {
+        // Refresh failed, redirect to login
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        window.location.href = '/login'
+        return Promise.reject(refreshError)
+      }
+    }
+
+    return Promise.reject(error)
+  }
+)
 
 export interface CreateEventRequest {
   title: string
@@ -59,7 +108,6 @@ export interface BackendCalendarStats {
   byPriority: Record<string, number>
   completionRate: number
 }
-
 
 // Helper function to format date for backend
 const formatDateForBackend = (date: Date): string => {
@@ -159,24 +207,24 @@ export const calendarApiService = {
 
   // Update existing event
   updateEvent: (id: string, updates: Partial<CreateEventData>) => {
-  const backendUpdates: UpdateEventRequest = {}
-  
-  if (updates.title !== undefined) backendUpdates.title = updates.title
-  if (updates.description !== undefined) backendUpdates.description = updates.description
-  
-  // FIXED: Use proper date formatting for update as well
-  if (updates.startTime !== undefined) backendUpdates.startTime = formatDateForBackend(updates.startTime)
-  if (updates.endTime !== undefined) backendUpdates.endTime = formatDateForBackend(updates.endTime)
-  
-  if (updates.category !== undefined) backendUpdates.category = updates.category.toUpperCase() as UpdateEventRequest['category']
-  if (updates.priority !== undefined) backendUpdates.priority = updates.priority.toUpperCase() as UpdateEventRequest['priority']
-  if (updates.location !== undefined) backendUpdates.location = updates.location
-  if (updates.attendees !== undefined) backendUpdates.attendees = updates.attendees
-  if (updates.color !== undefined) backendUpdates.color = updates.color
-  if (updates.isAllDay !== undefined) backendUpdates.isAllDay = updates.isAllDay
+    const backendUpdates: UpdateEventRequest = {}
+    
+    if (updates.title !== undefined) backendUpdates.title = updates.title
+    if (updates.description !== undefined) backendUpdates.description = updates.description
+    
+    // Use proper date formatting for update
+    if (updates.startTime !== undefined) backendUpdates.startTime = formatDateForBackend(updates.startTime)
+    if (updates.endTime !== undefined) backendUpdates.endTime = formatDateForBackend(updates.endTime)
+    
+    if (updates.category !== undefined) backendUpdates.category = updates.category.toUpperCase() as UpdateEventRequest['category']
+    if (updates.priority !== undefined) backendUpdates.priority = updates.priority.toUpperCase() as UpdateEventRequest['priority']
+    if (updates.location !== undefined) backendUpdates.location = updates.location
+    if (updates.attendees !== undefined) backendUpdates.attendees = updates.attendees
+    if (updates.color !== undefined) backendUpdates.color = updates.color
+    if (updates.isAllDay !== undefined) backendUpdates.isAllDay = updates.isAllDay
 
-  return calendarApi.put<ApiResponse<BackendCalendarEvent>>(`/events/${id}`, backendUpdates)
-},
+    return calendarApi.put<ApiResponse<BackendCalendarEvent>>(`/events/${id}`, backendUpdates)
+  },
 
   // Delete event
   deleteEvent: (id: string) =>
@@ -195,11 +243,11 @@ export const calendarApiService = {
     calendarApi.get<ApiResponse<BackendCalendarEvent[]>>(`/events/upcoming?days=${days}`),
 
   // Check for event conflicts
- checkEventConflicts: (eventData: CreateEventData, eventId?: string) => {
-  const backendEvent = transformEventToBackend(eventData) // This should now use the fixed transform
-  const params = eventId ? `?eventId=${eventId}` : ''
-  return calendarApi.post<ApiResponse<BackendCalendarEvent[]>>(`/events/conflicts${params}`, backendEvent)
-}
+  checkEventConflicts: (eventData: CreateEventData, eventId?: string) => {
+    const backendEvent = transformEventToBackend(eventData)
+    const params = eventId ? `?eventId=${eventId}` : ''
+    return calendarApi.post<ApiResponse<BackendCalendarEvent[]>>(`/events/conflicts${params}`, backendEvent)
+  }
 }
 
 // Export transform functions for use in hooks
