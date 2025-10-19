@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { Layout } from '@/components/layout/Layout'
+import { PublicLayout } from '@/components/layout/PublicLayout'
 import { ProtectedRoute } from '@/components/common/ProtectedRoute'
 import Dashboard from '@/pages/Dashboard'
 import Weather from '@/pages/Weather'
@@ -43,34 +44,42 @@ function App() {
         />
 
         <Routes>
-          {/* Public Routes */}
+          {/* ===== PUBLIC ROUTES (No Authentication Required) ===== */}
+          <Route element={<PublicLayout />}>
+            <Route index element={<Dashboard />} /> {/* Landing page */}
+            <Route path="/weather" element={<Weather />} />
+            <Route path="/news" element={<News />} />
+          </Route>
+
+          {/* ===== AUTH ROUTES ===== */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Protected Routes */}
+          {/* ===== PROTECTED ROUTES (Authentication Required) ===== */}
           <Route
-            path="/"
+            path="/app"
             element={
               <ProtectedRoute>
                 <Layout />
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="weather" element={<Weather />} />
             <Route path="news" element={<News />} />
             <Route path="todos" element={<Todo />} />
-            <Route path="analytics" element={<Analytics />} />
             <Route path="calendar" element={<Calendar />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="profile" element={<Profile />} />
             <Route path="change-password" element={<ChangePassword />} />
             <Route path="settings" element={<ComingSoon title="Settings" />} />
           </Route>
 
-          {/* Fallback */}
+          {/* ===== FALLBACK ===== */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

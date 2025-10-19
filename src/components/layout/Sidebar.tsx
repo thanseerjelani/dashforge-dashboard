@@ -18,17 +18,17 @@ interface SidebarProps {
 }
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Weather', href: '/weather', icon: Cloud },
-    { name: 'News', href: '/news', icon: Newspaper },
-    { name: 'Todo List', href: '/todos', icon: CheckSquare },
-    { name: 'Analytics', href: '/analytics', icon: TrendingUp },
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
+    { name: 'Weather', href: '/app/weather', icon: Cloud },
+    { name: 'News', href: '/app/news', icon: Newspaper },
+    { name: 'Todo List', href: '/app/todos', icon: CheckSquare },
+    { name: 'Calendar', href: '/app/calendar', icon: Calendar },
+    { name: 'Analytics', href: '/app/analytics', icon: TrendingUp },
 ]
 
 const secondaryNavigation = [
-    { name: 'Settings', href: '/settings', icon: Settings },
-    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'Settings', href: '/app/settings', icon: Settings },
+    { name: 'Profile', href: '/app/profile', icon: User },
 ]
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
@@ -75,7 +75,6 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                                             className={cn(
                                                 "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                                                 "hover:bg-accent hover:text-accent-foreground hover:translate-x-1",
-
                                                 isActive
                                                     ? "bg-sky-200 text-black shadow-sm"
                                                     : "text-muted-foreground"

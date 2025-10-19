@@ -9,6 +9,8 @@ import { Loading } from '@/components/common/Loading'
 import { useTopHeadlines, useNewsSearch } from '@/hooks/useNews'
 import { NewsArticle, NewsCategory } from '@/types/news'
 import { formatTimeAgo, formatDate, truncateText } from '@/utils/helpers'
+import { useAuthStore } from '@/store/authStore'
+import { SignupPrompt } from '@/components/common/SignupPrompt'
 
 const News = () => {
     const [searchQuery, setSearchQuery] = useState('')
@@ -279,6 +281,16 @@ const News = () => {
                         {searchQuery.trim() && ` for "${searchQuery}"`}
                     </span>
                 </div>
+            )}
+
+            {/* Signup Prompt - Only show if NOT authenticated */}
+            {!useAuthStore.getState().isAuthenticated && (
+                <SignupPrompt
+                    title="Want to save your favorite articles?"
+                    description="Sign up to bookmark articles, create reading lists, and get personalized news recommendations."
+                    primaryAction="Sign Up Free"
+                    secondaryAction="Login"
+                />
             )}
 
             {/* Loading State */}

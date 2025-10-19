@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,36 +11,48 @@ import {
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 
-// Import hooks to get real data
+// Import hooks
 import { useWeather } from '@/hooks/useWeather'
 import { useTopHeadlines } from '@/hooks/useNews'
 import { useTodos } from '@/hooks/useTodos'
+import { useAuthStore } from '@/store/authStore'
 
 // Import dashboard components
 import DashboardStats from '@/components/dashboard/DashboardStats'
 import QuickActions from '@/components/dashboard/QuickActions'
 import RecentActivity from '@/components/dashboard/RecentActivity'
 import DashboardCards from '@/components/dashboard/DashboardCards'
+import { SignupPrompt } from '@/components/common/SignupPrompt'
 
 // React Router navigation
 import { useNavigate } from 'react-router-dom'
 
 const Dashboard = () => {
     const [refreshing, setRefreshing] = useState(false)
-    const [selectedCity] = useState('Mumbai') // Default city
-    const navigate = useNavigate() // React Router navigation
+    const [selectedCity] = useState('Mumbai')
+    const navigate = useNavigate()
+    const { isAuthenticated } = useAuthStore()
 
-    // Fetch real data from all modules
+    // Fetch real data
     const { data: weather, isLoading: weatherLoading, refetch: refetchWeather } = useWeather(selectedCity)
     const { data: news, isLoading: newsLoading, refetch: refetchNews } = useTopHeadlines(undefined, 'us', 6)
-    const { todos, stats } = useTodos()
+
+    // Only fetch todos if authenticated
+    const { todos, stats } = isAuthenticated ? useTodos() : {
+        todos: [], stats: {
+            total: 0,
+            completed: 0,
+            pending: 0,
+            overdue: 0,
+            byPriority: {},
+            byCategory: {}
+        }
+    }
 
     // Get recent todos (last 5 updated)
     const recentTodos = todos
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .slice(0, 5)
-
-    // Get overdue todos
 
     // Get today's completed todos
     const todayCompleted = todos.filter(todo => {
@@ -62,7 +75,23 @@ const Dashboard = () => {
     }
 
     const handleNavigate = (path: string) => {
-        navigate(path)
+        // If user is authenticated, navigate to /app routes
+        // If not authenticated and trying to access protected route, show prompt
+        const protectedRoutes = ['/todos', '/calendar', '/profile', '/analytics']
+
+        if (!isAuthenticated && protectedRoutes.some(route => path.includes(route))) {
+            // Scroll to signup prompt
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+            return
+        }
+
+        if (isAuthenticated) {
+            // Navigate to /app routes
+            navigate(`/app${path}`)
+        } else {
+            // Public routes
+            navigate(path)
+        }
     }
 
     return (
@@ -70,9 +99,13 @@ const Dashboard = () => {
             {/* Welcome Section */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight">Welcome back! 👋</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        {isAuthenticated ? 'Welcome back! 👋' : 'Welcome to DashForge! 👋'}
+                    </h1>
                     <p className="text-muted-foreground text-xs md:text-lg">
-                        Here's what's happening with your dashboard today.
+                        {isAuthenticated
+                            ? "Here's what's happening with your dashboard today."
+                            : "Your all-in-one productivity hub. Check weather, read news, and more!"}
                     </p>
                 </div>
                 <Button
@@ -123,8 +156,8 @@ const Dashboard = () => {
                 onNavigate={handleNavigate}
             />
 
-            {/* Performance Insights */}
-            {stats.total > 0 && (
+            {/* Performance Insights - Only show if authenticated and has todos */}
+            {isAuthenticated && stats.total > 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -205,6 +238,16 @@ const Dashboard = () => {
                         </div>
                     </CardContent>
                 </Card>
+            )}
+
+            {/* Signup Prompt - Only show if NOT authenticated */}
+            {!isAuthenticated && (
+                <SignupPrompt
+                    title="Ready to unlock all features?"
+                    description="Create todos, manage calendar events, track your progress, and build better habits."
+                    primaryAction="Get Started Free"
+                    secondaryAction="Sign In"
+                />
             )}
         </div>
     )

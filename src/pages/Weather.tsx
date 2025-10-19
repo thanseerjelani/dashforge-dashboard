@@ -1,4 +1,3 @@
-// src/pages/Weather.tsx
 import { useState, useEffect } from 'react'
 import WeatherCard from '@/components/weather/WeatherCard'
 import WeatherDetails from '@/components/weather/WeatherDetails'
@@ -6,16 +5,16 @@ import WeatherForecast from '@/components/weather/WeatherForecast'
 import LocationSearch from '@/components/weather/LocationSearch'
 import { useWeather, useWeatherByCoords } from '@/hooks/useWeather'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { useAuthStore } from '@/store/authStore'
+import { SignupPrompt } from '@/components/common/SignupPrompt'
 
 const Weather = () => {
-    // Default to Indian cities for better experience
+    const { isAuthenticated } = useAuthStore()
     const [selectedCity, setSelectedCity] = useState('Mumbai')
     const [useCurrentLocation, setUseCurrentLocation] = useState(false)
 
-    // Geolocation hook
     const { latitude, longitude, error: geoError, loading: geoLoading } = useGeolocation()
 
-    // Weather hooks
     const weatherByCity = useWeather(selectedCity, !useCurrentLocation)
     const weatherByCoords = useWeatherByCoords(
         latitude || 0,
@@ -23,7 +22,6 @@ const Weather = () => {
         useCurrentLocation && !!latitude && !!longitude
     )
 
-    // Determine which weather data to use
     const currentWeatherQuery = useCurrentLocation ? weatherByCoords : weatherByCity
     const { data: weather, isLoading, error } = currentWeatherQuery
 
@@ -36,19 +34,16 @@ const Weather = () => {
         setUseCurrentLocation(true)
     }
 
-    // Update selected city when using geolocation and weather data is available
     useEffect(() => {
         if (useCurrentLocation && weather?.location.name) {
             setSelectedCity(weather.location.name)
         }
     }, [useCurrentLocation, weather?.location.name])
 
-    // Get display location
     const displayLocation = weather?.location.name
         ? `${weather.location.name}, ${weather.location.country}`
         : selectedCity
 
-    // Combine errors
     const combinedError = error?.message || (useCurrentLocation && geoError) || null
 
     return (
@@ -96,6 +91,16 @@ const Weather = () => {
                     />
                 </div>
             </div>
+
+            {/* Signup Prompt - Only show if NOT authenticated and weather loaded */}
+            {!isAuthenticated && weather && (
+                <SignupPrompt
+                    title="Love the weather updates?"
+                    description="Sign up to save your favorite locations, get weather alerts, and access todos and calendar features."
+                    primaryAction="Sign Up Free"
+                    secondaryAction="Login"
+                />
+            )}
 
             {/* Debug Info for Development */}
             {import.meta.env.DEV && (
