@@ -1,20 +1,25 @@
 // src/pages/Register.tsx
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuthStore } from '@/store/authStore'
+import { getRedirectPath } from '@/utils/navigationHelpers'
 
 const Register = () => {
     const navigate = useNavigate()
+    const location = useLocation()
     const { isAuthenticated } = useAuthStore()
+
+    // Get the redirect path from location state or default to /app/dashboard
+    const from = getRedirectPath(location)
 
     // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/')
+            navigate(from, { replace: true })
         }
-    }, [isAuthenticated, navigate])
+    }, [isAuthenticated, navigate, from])
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-sky-500/5 p-4">

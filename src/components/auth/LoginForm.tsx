@@ -1,15 +1,17 @@
 // src/components/auth/LoginForm.tsx
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/useAuth'
 import { LoginFormData } from '@/types/auth'
+import { getRedirectPath } from '@/utils/navigationHelpers'
 
 export const LoginForm = () => {
     const navigate = useNavigate()
+    const location = useLocation()
     const { login, isLoading, error, clearError } = useAuth()
     const [showPassword, setShowPassword] = useState(false)
     const [formData, setFormData] = useState<LoginFormData>({
@@ -17,6 +19,9 @@ export const LoginForm = () => {
         password: '',
     })
     const [validationErrors, setValidationErrors] = useState<Partial<LoginFormData>>({})
+
+    // Get redirect path from location state or default to /app/dashboard
+    const from = getRedirectPath(location)
 
     // Clear form on component mount (when user logs out and comes back)
     useEffect(() => {
@@ -53,7 +58,8 @@ export const LoginForm = () => {
         if (result.success) {
             // Clear form before navigation
             setFormData({ email: '', password: '' })
-            navigate('/')
+            // Navigate to protected route
+            navigate(from, { replace: true })
         }
     }
 

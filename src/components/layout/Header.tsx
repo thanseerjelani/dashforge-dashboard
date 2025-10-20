@@ -21,22 +21,47 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
     const [showUserMenu, setShowUserMenu] = useState(false)
 
     const getPageTitle = () => {
-        switch (location.pathname) {
-            case '/': return 'Dashboard'
-            case '/weather': return 'Weather'
-            case '/news': return 'News'
-            case '/todos': return 'Todo List'
-            case '/settings': return 'Settings'
-            case '/analytics': return 'Analytics'
-            case '/calendar': return 'Calendar'
-            case '/profile': return 'Profile'
-            default: return 'Dashboard'
+        const path = location.pathname
+        // Handle /app routes
+        if (path.startsWith('/app/')) {
+            const pageName = path.replace('/app/', '')
+            return pageName.charAt(0).toUpperCase() + pageName.slice(1)
+        }
+        // Handle root routes
+        switch (path) {
+            case '/':
+            case '/app':
+            case '/app/dashboard':
+                return 'Dashboard'
+            case '/weather':
+            case '/app/weather':
+                return 'Weather'
+            case '/news':
+            case '/app/news':
+                return 'News'
+            case '/todos':
+            case '/app/todos':
+                return 'Todo List'
+            case '/settings':
+            case '/app/settings':
+                return 'Settings'
+            case '/analytics':
+            case '/app/analytics':
+                return 'Analytics'
+            case '/calendar':
+            case '/app/calendar':
+                return 'Calendar'
+            case '/profile':
+            case '/app/profile':
+                return 'Profile'
+            default:
+                return 'Dashboard'
         }
     }
 
     const handleLogout = async () => {
         await logout()
-        navigate('/login')
+        navigate('/')  // Redirect to public dashboard
     }
 
     return (
@@ -130,7 +155,7 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
                                     </div>
                                     <div className="p-2">
                                         <Link
-                                            to="/profile"
+                                            to="/app/profile"
                                             onClick={() => setShowUserMenu(false)}
                                             className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
                                         >

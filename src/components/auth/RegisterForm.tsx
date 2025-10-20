@@ -1,15 +1,17 @@
 // src/components/auth/RegisterForm.tsx
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { User, Mail, Lock, Eye, EyeOff, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/useAuth'
 import { RegisterFormData } from '@/types/auth'
+import { getRedirectPath } from '@/utils/navigationHelpers'
 
 export const RegisterForm = () => {
     const navigate = useNavigate()
+    const location = useLocation()
     const { register, isLoading, error, clearError } = useAuth()
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -20,6 +22,9 @@ export const RegisterForm = () => {
         confirmPassword: '',
     })
     const [validationErrors, setValidationErrors] = useState<Partial<RegisterFormData>>({})
+
+    // Get redirect path from location state or default to /app/dashboard
+    const from = getRedirectPath(location)
 
     const validateForm = (): boolean => {
         const errors: Partial<RegisterFormData> = {}
@@ -71,7 +76,8 @@ export const RegisterForm = () => {
         const result = await register(formData)
 
         if (result.success) {
-            navigate('/')
+            // Navigate to protected route
+            navigate(from, { replace: true })
         }
     }
 
