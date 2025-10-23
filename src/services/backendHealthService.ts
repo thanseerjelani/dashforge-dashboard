@@ -3,7 +3,8 @@ import { toast } from 'sonner'
 
 class BackendHealthService {
   private isChecking = false
-  private retryDelay = 10000 // 10 seconds between retries
+  private maxRetries = 4 // 4 attempts × 4 seconds = 16 seconds total
+  private retryDelay = 4000 // 4 seconds between retries
   private healthCheckUrl = `${import.meta.env.VITE_API_URL}/actuator/health`
   private toastId: string | number | undefined
 
@@ -11,6 +12,7 @@ class BackendHealthService {
    * Check if backend is awake and ready
    * Only runs in production environment
    * Shows a small toast notification instead of blocking UI
+   * Checks for 16 seconds (4 attempts × 4 seconds each)
    */
   async checkBackendHealth(): Promise<void> {
     // Skip health check in development
@@ -29,17 +31,17 @@ class BackendHealthService {
 
     // Show initial toast
     this.toastId = toast.loading('Waking up backend...', {
-      description: 'Checking every 10 seconds',
+      description: 'Checking every 4 seconds',
       duration: Infinity,
     })
 
-    while (this.isChecking) {
+    while (attempt < this.maxRetries) {
       attempt++
       
       try {
         const response = await fetch(this.healthCheckUrl, {
           method: 'GET',
-          signal: AbortSignal.timeout(8000), // 8 second timeout per request
+          signal: AbortSignal.timeout(3000), // 3 second timeout per request
         })
 
         if (response.ok) {
@@ -58,18 +60,27 @@ class BackendHealthService {
             })
             
             this.isChecking = false
-            break // Exit the loop
+            return
           }
         }
       } catch (error) {
-        console.log(`🔄 Backend not ready yet (attempt ${attempt}, checking every 10s)`, error)
+        console.log(`🔄 Backend not ready yet (attempt ${attempt}/${this.maxRetries})`)
       }
 
-      // Only wait if still checking
-      if (this.isChecking) {
+      // Wait before next retry (but not after last attempt)
+      if (attempt < this.maxRetries) {
         await new Promise(resolve => setTimeout(resolve, this.retryDelay))
       }
     }
+
+    // Max retries reached - dismiss loading toast
+    console.log('⏱️ Health check timeout - stopped checking')
+    if (this.toastId) {
+      toast.dismiss(this.toastId)
+      this.toastId = undefined
+    }
+    
+    this.isChecking = false
   }
 
   /**
