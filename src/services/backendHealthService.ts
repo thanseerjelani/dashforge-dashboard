@@ -3,8 +3,8 @@ import { toast } from 'sonner'
 
 class BackendHealthService {
   private isChecking = false
-  private maxRetries = 4 // 4 attempts × 4 seconds = 16 seconds total
-  private retryDelay = 4000 // 4 seconds between retries
+  private maxRetries = 3 // 3 attempts × 3 seconds = 9 seconds total
+  private retryDelay = 3000 // 2 seconds between retries
   private healthCheckUrl: string
   private toastId: string | number | undefined
 
