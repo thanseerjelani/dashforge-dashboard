@@ -19,6 +19,7 @@ import ChangePassword from '@/pages/ChangePassword'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuthStore } from '@/store/authStore'
 import { sessionManager } from '@/services/sessionManager'
+import { backendHealthService } from '@/services/backendHealthService'
 import { useEffect } from 'react'
 
 function App() {
@@ -32,6 +33,12 @@ function App() {
       document.documentElement.classList.remove('dark')
     }
   }, [isDark])
+
+
+  useEffect(() => {
+    // Check backend health on app load (production only)
+    backendHealthService.checkBackendHealth()
+  }, [])
 
   return (
     <Router>
