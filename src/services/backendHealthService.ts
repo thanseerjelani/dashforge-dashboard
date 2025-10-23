@@ -5,8 +5,16 @@ class BackendHealthService {
   private isChecking = false
   private maxRetries = 4 // 4 attempts × 4 seconds = 16 seconds total
   private retryDelay = 4000 // 4 seconds between retries
-  private healthCheckUrl = `${import.meta.env.VITE_API_URL?.replace('/api', '')}/actuator/health`
+  private healthCheckUrl: string
   private toastId: string | number | undefined
+
+  constructor() {
+    // Remove /api from the base URL and add /actuator/health
+    const baseUrl = import.meta.env.VITE_API_URL || ''
+    const cleanBaseUrl = baseUrl.replace('/api', '')
+    this.healthCheckUrl = `${cleanBaseUrl}/actuator/health`
+    console.log('🔍 Health check URL:', this.healthCheckUrl)
+  }
 
   /**
    * Check if backend is awake and ready
@@ -64,7 +72,7 @@ class BackendHealthService {
           }
         }
       } catch (error) {
-        console.log(`🔄 Backend not ready yet (attempt ${attempt}/${this.maxRetries})`,error)
+        console.log(`🔄 Backend not ready yet (attempt ${attempt}/${this.maxRetries})`, error)
       }
 
       // Wait before next retry (but not after last attempt)
