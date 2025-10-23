@@ -19,7 +19,10 @@ class BackendHealthService {
       return
     }
 
-    if (this.isChecking) return
+    if (this.isChecking) {
+      console.log('⚠️ Health check already in progress')
+      return
+    }
     
     this.isChecking = true
     let attempt = 0
@@ -30,7 +33,7 @@ class BackendHealthService {
       duration: Infinity,
     })
 
-    while (true) {
+    while (this.isChecking) {
       attempt++
       
       try {
@@ -47,6 +50,7 @@ class BackendHealthService {
             // Dismiss loading toast and show success
             if (this.toastId) {
               toast.dismiss(this.toastId)
+              this.toastId = undefined
             }
             toast.success('Backend is ready!', {
               description: 'All features are now available',
@@ -54,15 +58,17 @@ class BackendHealthService {
             })
             
             this.isChecking = false
-            return
+            break // Exit the loop
           }
         }
       } catch (error) {
         console.log(`🔄 Backend not ready yet (attempt ${attempt}, checking every 10s)`, error)
       }
 
-      // Wait 10 seconds before next retry
-      await new Promise(resolve => setTimeout(resolve, this.retryDelay))
+      // Only wait if still checking
+      if (this.isChecking) {
+        await new Promise(resolve => setTimeout(resolve, this.retryDelay))
+      }
     }
   }
 
