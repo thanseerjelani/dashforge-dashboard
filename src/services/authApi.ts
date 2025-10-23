@@ -1,5 +1,6 @@
 // src/services/authApi.ts
 import axios from 'axios'
+import { sessionManager } from './sessionManager'
 import {
   LoginRequest,
   RegisterRequest,
@@ -27,7 +28,7 @@ const authApi = axios.create({
   },
 })
 
-// Add request interceptor to include access token
+// ===== REQUEST INTERCEPTOR =====
 authApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken')
@@ -36,37 +37,29 @@ authApi.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
-// Add response interceptor for token refresh
+// ===== RESPONSE INTERCEPTOR =====
 authApi.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    const status = error.response?.status
 
-    // If error is 401 and we haven't tried to refresh yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 errors (unauthorized)
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken')
-        if (refreshToken) {
-          const response = await authApiService.refreshToken({ refreshToken })
-          const { accessToken } = response.data.data
-
-          localStorage.setItem('accessToken', accessToken)
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`
-
-          return authApi(originalRequest)
-        }
+        // Use centralized session manager for token refresh
+        const newAccessToken = await sessionManager.refreshToken()
+        
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        return authApi(originalRequest)
       } catch (refreshError) {
-        // Refresh failed, logout user
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        window.location.href = '/login'
+        // Session manager will handle logout and redirect
         return Promise.reject(refreshError)
       }
     }
@@ -75,8 +68,9 @@ authApi.interceptors.response.use(
   }
 )
 
+// ===== API SERVICES =====
 export const authApiService = {
-  // ===== Authentication =====
+  // Authentication
   register: (data: RegisterRequest) =>
     authApi.post<AuthApiResponse<AuthResponse>>('/auth/register', data),
 
@@ -89,17 +83,15 @@ export const authApiService = {
   logout: (refreshToken: string) =>
     authApi.post<AuthApiResponse<null>>('/auth/logout', { refreshToken }),
 
-  logoutAll: () =>
-    authApi.post<AuthApiResponse<null>>('/auth/logout-all'),
+  logoutAll: () => authApi.post<AuthApiResponse<null>>('/auth/logout-all'),
 
-  getProfile: () =>
-    authApi.get<AuthApiResponse<User>>('/auth/profile'),
+  getProfile: () => authApi.get<AuthApiResponse<User>>('/auth/profile'),
 
-  // ===== Profile Management =====
+  // Profile Management
   updateProfile: (data: UpdateProfileRequest) =>
     authApi.put<AuthApiResponse<ProfileUpdateResponse>>('/auth/profile', data),
 
-  // ===== Password Management =====
+  // Password Management
   changePassword: (data: ChangePasswordRequest) =>
     authApi.post<AuthApiResponse<string>>('/auth/change-password', data),
 
@@ -112,9 +104,8 @@ export const authApiService = {
   resetPassword: (data: ResetPasswordRequest) =>
     authApi.post<AuthApiResponse<string>>('/auth/reset-password', data),
 
-  // Health check
-  healthCheck: () =>
-    authApi.get<string>('/auth/health')
+  // Health Check
+  healthCheck: () => authApi.get<string>('/auth/health'),
 }
 
 export default authApi

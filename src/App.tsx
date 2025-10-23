@@ -1,4 +1,3 @@
-// src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { Layout } from '@/components/layout/Layout'
@@ -18,6 +17,8 @@ import VerifyOtp from '@/pages/VerifyOtp'
 import ResetPassword from '@/pages/ResetPassword'
 import ChangePassword from '@/pages/ChangePassword'
 import { useTheme } from '@/hooks/useTheme'
+import { useAuthStore } from '@/store/authStore'
+import { sessionManager } from '@/services/sessionManager'
 import { useEffect } from 'react'
 
 function App() {
@@ -34,14 +35,10 @@ function App() {
 
   return (
     <Router>
+      <SessionInitializer />
       <div className="min-h-screen bg-background text-foreground">
         {/* Toast Notifications */}
-        <Toaster
-          position="top-right"
-          expand={false}
-          richColors
-          closeButton
-        />
+        <Toaster position="top-right" expand={false} richColors closeButton />
 
         <Routes>
           {/* ===== PUBLIC ROUTES (No Authentication Required) ===== */}
@@ -85,6 +82,35 @@ function App() {
       </div>
     </Router>
   )
+}
+
+/**
+ * ✅ Initializes session monitoring on app load
+ * Only runs once when app starts
+ */
+function SessionInitializer() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  useEffect(() => {
+    // Initialize session monitoring if user is logged in
+    if (isAuthenticated) {
+      const token = localStorage.getItem('accessToken')
+      if (token && sessionManager.isTokenValid(token)) {
+        sessionManager.initSession(token)
+      } else {
+        // Token invalid/expired - logout
+        const logout = useAuthStore.getState().logout
+        logout()
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      sessionManager.clearSession()
+    }
+  }, [isAuthenticated])
+
+  return null
 }
 
 // Coming Soon Component for placeholder pages

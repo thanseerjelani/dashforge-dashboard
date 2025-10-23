@@ -47,14 +47,14 @@ const Profile = () => {
     const handleLogout = async () => {
         setIsLoggingOut(true)
         await logout()
-        navigate('/login')
+        navigate('/')  // Redirect to public dashboard
     }
 
     const handleLogoutAll = async () => {
         if (confirm('This will log you out from all devices. Continue?')) {
             setIsLoggingOut(true)
             await logoutAll()
-            navigate('/login')
+            navigate('/')  // Redirect to public dashboard
         }
     }
 
@@ -185,7 +185,7 @@ const Profile = () => {
                             </div>
                             <Button
                                 variant="outline"
-                                onClick={() => navigate('/change-password')}
+                                onClick={() => navigate('/app/change-password')}
                             >
                                 Change
                             </Button>

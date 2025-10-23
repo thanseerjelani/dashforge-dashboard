@@ -77,7 +77,7 @@ const ChangePassword = () => {
 
             // Navigate back to profile after 1 second
             setTimeout(() => {
-                navigate('/profile')
+                navigate('/app/profile')
             }, 1000)
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to change password')
@@ -98,7 +98,7 @@ const ChangePassword = () => {
         <div className="max-w-2xl mx-auto space-y-6">
             {/* Back Button */}
             <Link
-                to="/profile"
+                to="/app/profile"
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
                 <ArrowLeft className="h-4 w-4" />
