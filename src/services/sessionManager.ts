@@ -34,10 +34,10 @@ class SessionManager {
       const expiryTime = payload.exp * 1000
       const now = Date.now()
       
-      // If token already expired, logout immediately
+      // If token already expired, use silent logout
       if (now >= expiryTime) {
-        console.log('Token already expired')
-        this.handleSessionExpiry('Token already expired')
+        console.log('⚠️ Token already expired on init')
+        this.handleTokenExpired()
         return
       }
 
@@ -47,23 +47,23 @@ class SessionManager {
       const refreshBuffer = Math.min(30 * 1000, timeUntilExpiry / 2)
       const refreshTime = timeUntilExpiry - refreshBuffer
 
-      console.log(`Token expires in ${Math.floor(timeUntilExpiry / 1000)}s. Will refresh in ${Math.floor(refreshTime / 1000)}s`)
+      console.log(`⏰ Token expires in ${Math.floor(timeUntilExpiry / 1000)}s. Will refresh in ${Math.floor(refreshTime / 1000)}s`)
 
-      // ⚠️ IMPORTANT: This timer should REFRESH the token, not logout!
+      // Schedule token refresh
       this.expiryTimer = setTimeout(async () => {
-        console.log('Attempting to refresh token...')
+        console.log('🔄 Attempting to refresh token...')
         try {
           await this.refreshToken()
-          console.log('Token refreshed successfully')
+          console.log('✅ Token refreshed successfully')
         } catch (error) {
-          console.error('Failed to refresh token, logging out...', error)
-          this.handleSessionExpiry('Failed to refresh token')
+          console.error('❌ Failed to refresh token:', error)
+          this.handleTokenExpired()
         }
       }, refreshTime)
 
     } catch (error) {
-      console.error('Invalid JWT token:', error)
-      this.handleSessionExpiry('Invalid session token')
+      console.error('❌ Invalid JWT token:', error)
+      this.handleTokenExpired()
     }
   }
 
@@ -73,7 +73,7 @@ class SessionManager {
   async refreshToken(): Promise<string> {
     // Prevent multiple simultaneous refresh requests
     if (this.isRefreshing && this.refreshPromise) {
-      console.log('Refresh already in progress, waiting...')
+      console.log('⏳ Refresh already in progress, waiting...')
       return this.refreshPromise
     }
 
@@ -119,18 +119,21 @@ class SessionManager {
   }
 
   /**
-   * Handle session expiry - centralized logout
+   * Handle token expiry - uses silent logout to avoid API calls with invalid tokens
    */
-  private async handleSessionExpiry(reason: string) {
-    console.log('Session expired:', reason)
+  private handleTokenExpired() {
+    console.log('🔒 Token expired - performing silent logout')
     
     this.clearExpiryTimer()
     
-    const logout = useAuthStore.getState().logout
-    await logout()
+    // Use silent logout instead of regular logout (no API call)
+    const { silentLogout } = useAuthStore.getState()
+    silentLogout()
 
     // Show user-friendly message
-    toast.error('Your session has expired. Please sign in again.')
+    toast.error('Your session has expired. Please sign in again.', {
+      duration: 4000,
+    })
 
     // Redirect to login after brief delay
     setTimeout(() => {
@@ -155,8 +158,15 @@ class SessionManager {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]))
       const expiryTime = payload.exp * 1000
-      return Date.now() < expiryTime
-    } catch {
+      const isValid = Date.now() < expiryTime
+      
+      if (!isValid) {
+        console.log('⚠️ Token validation failed - token expired')
+      }
+      
+      return isValid
+    } catch (error) {
+      console.error('⚠️ Token validation failed - invalid format:', error)
       return false
     }
   }

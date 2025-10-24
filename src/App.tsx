@@ -93,21 +93,31 @@ function App() {
 
 /**
  * ✅ Initializes session monitoring on app load
- * Only runs once when app starts
+ * Handles expired tokens gracefully without crashing
  */
 function SessionInitializer() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const silentLogout = useAuthStore((state) => state.silentLogout)
 
   useEffect(() => {
-    // Initialize session monitoring if user is logged in
+    // Only initialize if user is marked as authenticated
     if (isAuthenticated) {
       const token = localStorage.getItem('accessToken')
-      if (token && sessionManager.isTokenValid(token)) {
-        sessionManager.initSession(token)
+
+      if (token) {
+        // Check if token is still valid
+        if (sessionManager.isTokenValid(token)) {
+          console.log('✅ Valid token found - initializing session')
+          sessionManager.initSession(token)
+        } else {
+          // Token expired - use silent logout (no API call)
+          console.log('⚠️ Token expired on load - clearing session silently')
+          silentLogout()
+        }
       } else {
-        // Token invalid/expired - logout
-        const logout = useAuthStore.getState().logout
-        logout()
+        // No token in localStorage but marked as authenticated - clear state
+        console.log('⚠️ No token found but marked as authenticated - clearing state')
+        silentLogout()
       }
     }
 
@@ -115,7 +125,7 @@ function SessionInitializer() {
     return () => {
       sessionManager.clearSession()
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, silentLogout])
 
   return null
 }

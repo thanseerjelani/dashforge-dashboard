@@ -39,7 +39,7 @@ class BackendHealthService {
 
     // Show initial toast
     this.toastId = toast.loading('Waking up backend...', {
-      description: 'Checking every 4 seconds',
+      description: 'Checking every 3 seconds',
       duration: Infinity,
     })
 

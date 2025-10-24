@@ -31,6 +31,7 @@ interface AuthStore extends AuthState {
   setError: (error: string | null) => void
   clearError: () => void
   setLoading: (loading: boolean) => void
+  silentLogout: () => void // NEW: Silent logout without API call
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -86,17 +87,44 @@ export const useAuthStore = create<AuthStore>()(
       logout: async () => {
         try {
           const { refreshToken } = get()
-          if (refreshToken) await authApiService.logout(refreshToken)
-        } catch (err) {
-          console.error('Logout error:', err)
-        } finally {
-          // Clear session monitoring
-          sessionManager.clearSession()
           
+          // Only call API if we have a valid refresh token
+          if (refreshToken) {
+            try {
+              await authApiService.logout(refreshToken)
+            } catch (err) {
+              // Ignore API errors during logout - still clear local state
+              console.warn('Logout API call failed (ignoring):', err)
+            }
+          }
+        } finally {
+          // Always clear session and local storage
+          sessionManager.clearSession()
           localStorage.removeItem('accessToken')
           localStorage.removeItem('refreshToken')
-          set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, error: null })
+          set({ 
+            user: null, 
+            accessToken: null, 
+            refreshToken: null, 
+            isAuthenticated: false, 
+            error: null 
+          })
         }
+      },
+
+      // NEW: Silent logout without API call (for expired sessions)
+      silentLogout: () => {
+        console.log('🔒 Silent logout - clearing session')
+        sessionManager.clearSession()
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        set({ 
+          user: null, 
+          accessToken: null, 
+          refreshToken: null, 
+          isAuthenticated: false, 
+          error: null 
+        })
       },
 
       logoutAll: async () => {
@@ -119,7 +147,8 @@ export const useAuthStore = create<AuthStore>()(
           const newAccessToken = await sessionManager.refreshToken()
           set({ accessToken: newAccessToken })
         } catch (error) {
-          get().logout()
+          // Use silent logout to avoid API call with invalid token
+          get().silentLogout()
           throw error
         }
       },
