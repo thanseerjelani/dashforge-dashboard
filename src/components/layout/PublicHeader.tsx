@@ -1,16 +1,24 @@
 // src/components/layout/PublicHeader.tsx
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Moon, Sun, Menu, X } from 'lucide-react'
+import { Moon, Sun, Menu, X, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/hooks/useTheme'
 import { cn } from '@/utils/cn'
+import { backendHealthService } from '@/services/backendHealthService'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export const PublicHeader = () => {
     const { isDark, toggleTheme } = useTheme()
     const navigate = useNavigate()
     const location = useLocation()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isRefreshing, setIsRefreshing] = useState(false)
 
     const navigation = [
         { name: 'Home', href: '/' },
@@ -21,6 +29,18 @@ export const PublicHeader = () => {
     const isActive = (path: string) => {
         return location.pathname === path
     }
+
+    const handleWakeBackend = async () => {
+        setIsRefreshing(true)
+        try {
+            await backendHealthService.checkBackendHealth()
+        } finally {
+            setIsRefreshing(false)
+        }
+    }
+
+    // Only show refresh button in production
+    const showRefreshButton = !import.meta.env.DEV
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -56,8 +76,30 @@ export const PublicHeader = () => {
                     </nav>
                 </div>
 
-                {/* Right: Theme Toggle & Auth Buttons */}
+                {/* Right: Refresh, Theme Toggle & Auth Buttons */}
                 <div className="flex items-center gap-2">
+                    {/* Backend Refresh Button - Production Only */}
+                    {showRefreshButton && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={handleWakeBackend}
+                                        disabled={isRefreshing}
+                                        className="rounded-full"
+                                    >
+                                        <RefreshCw className={cn("h-5 w-5", isRefreshing && "animate-spin")} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Wake up backend server</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+
                     {/* Theme Toggle */}
                     <Button
                         variant="ghost"

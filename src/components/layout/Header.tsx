@@ -1,11 +1,19 @@
 // src/components/layout/Header.tsx
 import { useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
-import { Moon, Sun, Menu, X, Bell, Search, LogOut, User as UserIcon } from 'lucide-react'
+import { Moon, Sun, Menu, X, Bell, Search, LogOut, User as UserIcon, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
+import { backendHealthService } from '@/services/backendHealthService'
+import { cn } from '@/utils/cn'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface HeaderProps {
     onMobileMenuToggle: () => void
@@ -19,6 +27,7 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
     const navigate = useNavigate()
     const [searchQuery, setSearchQuery] = useState('')
     const [showUserMenu, setShowUserMenu] = useState(false)
+    const [isRefreshing, setIsRefreshing] = useState(false)
 
     const getPageTitle = () => {
         const path = location.pathname
@@ -63,6 +72,18 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
         await logout()
         navigate('/')  // Redirect to public dashboard
     }
+
+    const handleWakeBackend = async () => {
+        setIsRefreshing(true)
+        try {
+            await backendHealthService.checkBackendHealth()
+        } finally {
+            setIsRefreshing(false)
+        }
+    }
+
+    // Only show refresh button in production
+    const showRefreshButton = !import.meta.env.DEV
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -110,6 +131,27 @@ export const Header = ({ onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) =>
 
                 {/* Right section */}
                 <div className="flex items-center gap-2">
+                    {/* Backend Refresh Button - Production Only */}
+                    {showRefreshButton && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={handleWakeBackend}
+                                        disabled={isRefreshing}
+                                    >
+                                        <RefreshCw className={cn("h-5 w-5", isRefreshing && "animate-spin")} />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Wake up backend server</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+
                     <Button variant="ghost" size="icon" className="relative">
                         <Bell className="h-5 w-5" />
                         <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 text-xs" />
